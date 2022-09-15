@@ -1,20 +1,20 @@
 {
   "paths": {
-    "logpath": "/scr2/sedmdrp/redux/logs",
-    "photpath": "/scr2/sedmdrp/redux/phot",
-    "focuspath": "/scr2/sedmdrp/redux/focus",
-    "reduxpath": "/scr2/sedmdrp/redux/",
-    "rcpath": "/scr2/sedmdrp/redux/phot/",
-    "rawpath": "/scr2/sedm/raw/",
-    "srcpath": "/scr2/sedmdrp/sedmpy/",
-    "reqpath": "/scr2/sedm/logs/requests/"
+    "logpath": "/media/yashvi/Data/Work/SEDMv2/redux/logs",
+    "photpath": "/media/yashvi/Data/Work/SEDMv2/redux/phot",
+    "focuspath": "/media/yashvi/Data/Work/SEDMv2/redux/focus",
+    "reduxpath": "/media/yashvi/Data/Work/SEDMv2/redux/",
+    "rcpath": "/media/yashvi/Data/Work/SEDMv2/redux/phot/",
+    "rawpath": "/media/yashvi/Data/Work/SEDMv2/sedmv2/raw/",
+    "srcpath": "/media/yashvi/Data/Work/SEDMv2/sedmpy/",
+    "reqpath": "/media/yashvi/Data/Work/SEDMv2/sedmv2/logs/requests/"
   },
   "persistence": {
-    "db": true
+    "db": false
   },
   "backup": {
-    "redux_backup_file": "/scr2/sedmdrp/redux/irsa-p60-sedm-backup2.list",
-    "raw_backup_file": "/scr2/sedm/raw/irsa-p60-sedm-backup2.list",
-    "phot_backup_file": "/scr2/sedmdrp/redux/phot/irsa-p60-sedm-backup2.list"
+    "redux_backup_file": "/media/yashvi/Data/Work/SEDMv2/redux/irsa-p60-sedm-backup2.list",
+    "raw_backup_file": "/media/yashvi/Data/Work/SEDMv2/sedm/raw/irsa-p60-sedm-backup2.list",
+    "phot_backup_file": "/media/yashvi/Data/Work/SEDMv2/redux/phot/irsa-p60-sedm-backup2.list"
   }
 }

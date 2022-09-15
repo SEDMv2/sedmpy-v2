@@ -1,8 +1,8 @@
 #!/bin/bash -f
 
-source $HOME/miniconda3/bin/activate astroconda
+# source $HOME/miniconda3/bin/activate astroconda
 
-SEDMPATH=$HOME/sedmpy
+SEDMPATH=/media/yashvi/Data/Work/SEDMv2/sedmpy
 
 # if [ -z ${PYTHONPATH+X} ]
 # then PYTHONPATH=${PYTHONPATH}:${SEDMPATH}

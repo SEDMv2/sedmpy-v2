@@ -60,7 +60,7 @@ def identify_observations(headers):
             raise Exception("Headers not sorted by JD")
         jd = header['JD']
 
-        fname = header['filename']
+        fname = header['FILENAME']
         obj = header['OBJECT'].lstrip()
         name = header['NAME'].lstrip()
         exptime = header['exptime']
@@ -153,9 +153,9 @@ def identify_observations(headers):
 
 
 make_preamble_rc = """
-PY = ~/spy
-PYC = ~/sedmpy/drpifu
-PYR = ~/sedmpy/drprc
+PY = spy
+PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu
+PYR = /media/yashvi/Data/Work/SEDMv2/sedmpy/drprc
 IMCOMBINE = $(PY) $(PYC)/Imcombine.py
 REPORT = $(PY) $(PYR)/DrpReport.py
 
@@ -191,10 +191,10 @@ calimgs: dome.fits Hg.fits Cd.fits Xe.fits
 
 
 make_preamble = """
-PY = ~/spy
-PYC = ~/sedmpy/drpifu
-PYG = ~/sedmpy/growth
-PYF = ~/sedmpy/fritz
+PY = spy
+PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu
+PYG = /media/yashvi/Data/Work/SEDMv2/sedmpy/growth
+PYF = /media/yashvi/Data/Work/SEDMv2/sedmpy/fritz
 IMCOMBINE = $(PY) $(PYC)/Imcombine.py
 REPORT = $(PY) $(PYC)/DrpReport.py
 CLASS = $(PY) $(PYC)/Classify.py

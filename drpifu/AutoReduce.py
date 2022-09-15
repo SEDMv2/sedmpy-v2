@@ -136,16 +136,16 @@ def cube_ready(caldir='./', cur_date_str=None, avrmslim=35.0):
                                       os.path.join(caldir, 'bad')))
             logging.warning("Wavelength stats failed, moved cube to 'bad'")
             # Send email
-            msg = EmailMessage()
-            msg['To'] = "neill@srl.caltech.edu,"
-            msg['Subject'] = "SEDM Error - Wave solution failure for %s" \
-                             % cur_date_str
-            msg['From'] = 'No_reply_sedm_robot@astro.caltech.edu'
-            msg.set_content("Wavelength AvgRMS = %.1f > %.1f nm" % (avrms,
-                                                                    avrmslim))
-            # Send the message via local SMTP server.
-            with smtplib.SMTP('smtp-server.astro.caltech.edu') as s:
-                s.send_message(msg)
+            # msg = EmailMessage()
+            # msg['To'] = "neill@srl.caltech.edu,"
+            # msg['Subject'] = "SEDM Error - Wave solution failure for %s" \
+            #                  % cur_date_str
+            # msg['From'] = 'No_reply_sedm_robot@astro.caltech.edu'
+            # msg.set_content("Wavelength AvgRMS = %.1f > %.1f nm" % (avrms,
+            #                                                         avrmslim))
+            # # Send the message via local SMTP server.
+            # with smtplib.SMTP('smtp-server.astro.caltech.edu') as s:
+            #     s.send_message(msg)
     # Do we have all the calibration files?
     ft = os.path.exists(os.path.join(caldir, tmf))
     ftm = os.path.exists(os.path.join(caldir, tmmf))
@@ -201,7 +201,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
     """
 
     nbias = 0
-    bias_done = False
+    bias_done = False 
     nbias2 = 0
     bias2_done = False
     nxe = 0
@@ -233,6 +233,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
             # Loop over files
             for cal in cflist:
                 # Are we complete?
+                # print(os.stat(cal).st_size)
                 if os.stat(cal).st_size >= fsize:
                     # Read FITS header
                     ff = pf.open(cal)
@@ -244,7 +245,13 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                     except KeyError:
                         obj = ''
                     # Get ADCSPEED keyword
-                    speed = hdr['ADCSPEED']
+                    try:
+                        speed = hdr['ADCSPEED']
+                    except:
+                        if hdr['MODE_NUM']==0:
+                            speed = 2.0 #but really 1 MHz
+                        else:
+                            speed = 0.1 #but really 0.5 MHz and mode num could also be different, here until ADCSPEED keyword is included
 
                     # Check for calibration files
                     if 'Calib' in obj:
@@ -257,7 +264,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                                 nbias += 1
                                 if bias_done_str in obj:
                                     bias_done = True
-                        if 'Xe' in obj:
+                        if 'Xe' in obj or 'xenon' in obj:
                             nxe += 1
                             if lamp_done_str in obj:
                                 xe_done = True
@@ -601,11 +608,11 @@ def proc_bias_crrs(ncp=1, piggyback=False):
         ret = True
     else:
         # Get new listing
-        retcode = subprocess.call("~/spy what ifu*.fits > what.list",
+        retcode = subprocess.call("spy what ifu*.fits > what.list",
                                   shell=True)
         if retcode == 0:
             # Generate new Makefile
-            retcode = subprocess.call("~/spy plan ifu*.fits", shell=True)
+            retcode = subprocess.call("spy plan ifu*.fits", shell=True)
             if retcode == 0:
                 # Make bias + bias subtraction
                 retcode = subprocess.call(("make", "-j", "16", "bias"))
@@ -817,7 +824,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                             logging.error("Error running pysedm_report for " +
                                           fn.split('.')[0])
                         # run Verify.py
-                        cmd = "~/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         logging.info(cmd)
                         subprocess.call(cmd, shell=True)
@@ -848,7 +855,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                                          % fn.split('.')[0]))
                         if flxcal:
                             # Generate effective area and efficiency plots
-                            cmd = "~/sedmpy/drpifu/Eff.py %s --contains %s" % \
+                            cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Eff.py %s --contains %s" % \
                                   (datestr, fn.split('.')[0])
                             logging.info(cmd)
                             subprocess.call(cmd, shell=True)
@@ -929,7 +936,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                                 logging.error("Error uploading spectra to"
                                               " growth marshal")
                         # run Verify.py
-                        cmd = "~/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         subprocess.call(cmd, shell=True)
                         # notify user that followup successfully completed
@@ -969,7 +976,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                             if retcode != 0:
                                 logging.error("Error running SNID")
                             # run Verify.py
-                            cmd = "~/sedmpy/drpifu/Verify.py %s " \
+                            cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s " \
                                   "--contains contsep_lstep1__%s" \
                                   % (datestr, fn.split('.')[0])
                             subprocess.call(cmd, shell=True)
@@ -1394,8 +1401,8 @@ def email_user(spec_file, utdate, object_name):
 
 def make_finder(ffile):
     """ Spawn a process that makes a finder for the ifu file """
-    spy = os.path.join(os.getenv("HOME"), "spy")
-    prog = os.path.join(os.getenv("HOME"), "sedmpy", "drpifu", "acq_finder.py")
+    spy = os.path.join(os.getenv("SEDMPY"), "bin/spy")
+    prog = os.path.join(os.getenv("SEDMPY"), "drpifu", "acq_finder.py")
     cmd = (spy, prog, "--imfile", ffile)
     subprocess.Popen(cmd)
 
@@ -1675,7 +1682,7 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
     sdate = srcdir.split('/')[-1]
     # Get list of current raw calibration files
     # (within 10 hours of day changeover)
-    fspec = os.path.join(srcdir, "ifu%s_0*.fits" % sdate)
+    fspec = os.path.join(srcdir, "ifu%s_*.fits" % sdate)
     flist = sorted(glob.glob(fspec))
     # Record number copied
     ncp = 0
@@ -1718,6 +1725,7 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
                                            'Cd' not in obj):
                         if lampcur > 0.0:
                             # Copy dome images
+                            print('here')
                             nc, ns, nob = docp(src, destfil, onsky=False,
                                                verbose=True, nodb=nodb)
                             ncp += nc
@@ -1804,7 +1812,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
         fl = glob.glob("ifu*.fits")
         if len(fl) > 0:
             # Generate new Makefile
-            retcode = subprocess.call("~/spy plan ifu*.fits", shell=True)
+            retcode = subprocess.call("spy plan ifu*.fits", shell=True)
             if retcode != 0:
                 logging.warning("Error making plan in %s" % indir)
         else:
@@ -1876,7 +1884,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                     break
             else:
                 # Get new listing
-                retcode = subprocess.call("~/spy what ifu*.fits > what.list",
+                retcode = subprocess.call("spy what ifu*.fits > what.list",
                                           shell=True)
                 # Link what.txt
                 if not os.path.islink(os.path.join('what.txt')):
@@ -1952,7 +1960,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                              "%d s (waves),  and %d s (flat)" %
                              (procb_time, procg_time, procw_time, procf_time))
                 # Make cube report
-                cmd = "python ~/sedmpy/drpifu/CubeReport.py %s" % cur_date_str
+                cmd = "python /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/CubeReport.py %s" % cur_date_str
                 if not local:
                     cmd += " --slack"   # send to slack pysedm_report channel
                 logging.info(cmd)
@@ -2260,6 +2268,9 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
             sys.exit("Exiting")
     else:
         indir = os.path.join(rawd, indate)
+        # Fix headers for SEDMv2
+        subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}',shell=True)
+
         logging.info("Processing raw data from %s" % indir)
         stat = obs_loop(rawlist, redd, check_precal=check_precal, indir=indir,
                         piggyback=piggyback, local=local, nodb=nodb,
