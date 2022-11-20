@@ -154,8 +154,8 @@ def identify_observations(headers):
 
 make_preamble_rc = """
 PY = spy
-PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu
-PYR = /media/yashvi/Data/Work/SEDMv2/sedmpy/drprc
+PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy-v2/drpifu
+PYR = /media/yashvi/Data/Work/SEDMv2/sedmpy-v2/drprc
 IMCOMBINE = $(PY) $(PYC)/Imcombine.py
 REPORT = $(PY) $(PYR)/DrpReport.py
 
@@ -192,9 +192,9 @@ calimgs: dome.fits Hg.fits Cd.fits Xe.fits
 
 make_preamble = """
 PY = spy
-PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu
-PYG = /media/yashvi/Data/Work/SEDMv2/sedmpy/growth
-PYF = /media/yashvi/Data/Work/SEDMv2/sedmpy/fritz
+PYC = /media/yashvi/Data/Work/SEDMv2/sedmpy-v2/drpifu
+PYG = /media/yashvi/Data/Work/SEDMv2/sedmpy-v2/growth
+PYF = /media/yashvi/Data/Work/SEDMv2/sedmpy-v2/fritz
 IMCOMBINE = $(PY) $(PYC)/Imcombine.py
 REPORT = $(PY) $(PYC)/DrpReport.py
 CLASS = $(PY) $(PYC)/Classify.py

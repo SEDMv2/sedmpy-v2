@@ -65,6 +65,7 @@ try:
 except ImportError:
     import drprc.rcimg as rcimg
 
+SEDMPYPATH = os.getenv("SEDMPY")
 drp_ver = sedmpy_version.__version__
 logging.basicConfig(
     format='%(asctime)s %(funcName)s %(levelname)-8s %(message)s',
@@ -225,7 +226,6 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
             ret = True
 
     else:
-
         # Get files in calibration directory
         cflist = sorted(glob.glob(os.path.join(caldir, 'ifu*.fits')))
         # Are there any files yet?
@@ -282,7 +282,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                                 cd_done = True
 
             # Do we have the ideal number of calibration files?
-            if ((nbias2 >= 10 or bias2_done) and (nbias >= 10 or bias_done) and
+            if ((nbias2 >= 5 or bias2_done) and (nbias >= 5 or bias_done) and
                     (nxe >= 5 or xe_done) and (ndome >= 5 or dome_done) and
                     (nhg >= 5 or hg_done) and (ncd >= 5 or cd_done)):
                 ret = True
@@ -296,9 +296,8 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                      (nbias2, nbias, ndome, nxe, nhg, ncd))
         sys.stdout.flush()
         # Should we process biases?
-        if nbias2 >= 10 and nbias >= 10 and ncp > 0:
+        if nbias2 >= 10 and nbias >= 5 and ncp > 0:
             proc_bias_crrs(ncp=ncp)
-
     return ret
     # END: cal_proc_ready
 
@@ -824,7 +823,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                             logging.error("Error running pysedm_report for " +
                                           fn.split('.')[0])
                         # run Verify.py
-                        cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         logging.info(cmd)
                         subprocess.call(cmd, shell=True)
@@ -855,7 +854,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                                          % fn.split('.')[0]))
                         if flxcal:
                             # Generate effective area and efficiency plots
-                            cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Eff.py %s --contains %s" % \
+                            cmd = f"{SEDMPYPATH}/drpifu/Eff.py %s --contains %s" % \
                                   (datestr, fn.split('.')[0])
                             logging.info(cmd)
                             subprocess.call(cmd, shell=True)
@@ -936,7 +935,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                                 logging.error("Error uploading spectra to"
                                               " growth marshal")
                         # run Verify.py
-                        cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         subprocess.call(cmd, shell=True)
                         # notify user that followup successfully completed
@@ -976,7 +975,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                             if retcode != 0:
                                 logging.error("Error running SNID")
                             # run Verify.py
-                            cmd = "/media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/Verify.py %s " \
+                            cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s " \
                                   "--contains contsep_lstep1__%s" \
                                   % (datestr, fn.split('.')[0])
                             subprocess.call(cmd, shell=True)
@@ -1713,13 +1712,12 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
                 obj = ''
             # Filter Calibs and avoid test images and be sure it is part of
             # a series.
-            if 'Calib' in obj and 'of' in obj and 'test' not in obj and \
-                    'Test' not in obj:
+            if 'Calib' in obj and 'of' in obj:
                 exptime = hdr['EXPTIME']
                 lampcur = hdr['LAMPCUR']
                 # Check for dome exposures
                 if 'dome' in obj:
-                    if exptime > 100. and ('dome' in obj and
+                    if exptime >= 5. and ('dome' in obj and
                                            'Xe' not in obj and
                                            'Hg' not in obj and 
                                            'Cd' not in obj):
@@ -1960,7 +1958,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                              "%d s (waves),  and %d s (flat)" %
                              (procb_time, procg_time, procw_time, procf_time))
                 # Make cube report
-                cmd = "python /media/yashvi/Data/Work/SEDMv2/sedmpy/drpifu/CubeReport.py %s" % cur_date_str
+                cmd = f"python {SEDMPYPATH}/drpifu/CubeReport.py %s" % cur_date_str
                 if not local:
                     cmd += " --slack"   # send to slack pysedm_report channel
                 logging.info(cmd)
@@ -2269,7 +2267,7 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
     else:
         indir = os.path.join(rawd, indate)
         # Fix headers for SEDMv2
-        subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}',shell=True)
+        # subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}',shell=True)
 
         logging.info("Processing raw data from %s" % indir)
         stat = obs_loop(rawlist, redd, check_precal=check_precal, indir=indir,

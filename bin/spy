@@ -2,7 +2,7 @@
 
 # source $HOME/miniconda3/bin/activate astroconda
 
-SEDMPATH=/media/yashvi/Data/Work/SEDMv2/sedmpy
+SEDMPATH=$SEDMPY
 
 # if [ -z ${PYTHONPATH+X} ]
 # then PYTHONPATH=${PYTHONPATH}:${SEDMPATH}
