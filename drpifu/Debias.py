@@ -98,9 +98,9 @@ if __name__ == '__main__':
             continue
 
         FF = pf.open(ifile)
-        adcspeed = FF[0].header['ADCSPEED']
+        mode = FF[0].header['MODE_NUM']
 
-        bfname = "bias%1.1f.fits" % adcspeed
+        bfname = "bias%1.0f.fits" % mode
         bias = pf.open(bfname)
 
         # Bias frame subtraction

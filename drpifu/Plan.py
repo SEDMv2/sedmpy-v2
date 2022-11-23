@@ -15,9 +15,9 @@ def extract_info(infiles):
     has_ifu = False
     for ix, ifile in enumerate(infiles):
         rute = ifile.split('/')[-1]
-        if rute.startswith('rc'):
+        if 'rc' in rute:
             has_rc = True
-        if rute.startswith('ifu'):
+        if 'ifu' in rute:
             has_ifu = True
         ff = pf.open(ifile)
         ff[0].header['filename'] = ifile
@@ -62,22 +62,22 @@ def identify_observations(headers):
 
         fname = header['FILENAME']
         obj = header['OBJECT'].lstrip()
+        imtype = header['IMGTYPE']
         name = header['NAME'].lstrip()
         exptime = header['exptime']
-        adcspeed = header['ADCSPEED']
-        if "test" in obj or "Test" in obj or "TEST" in obj:
+        mode = header['MODE_NUM']
+        if "test" in imtype or "Test" in imtype or "TEST" in imtype:
             continue
-        if "Calib" in obj or "bias" in obj:
+        if "speccal" in fname:
 
             def append_to_calibs(instr):
 
-                if instr in obj:
+                if instr in imtype:
                     if "bias" in instr and exptime == 0.:
-                        instr = "%s%1.1f" % (instr, adcspeed)
+                        instr = "%s%1.0f" % (instr, mode)
                         prefix = ""
                         suffix = ""
-                    elif "Xe" in instr or "Hg" in instr or "Cd" in instr or \
-                            "Ne" in instr or "dome" in instr:
+                    elif "illum" in instr or "flat" in instr:
                         prefix = "b_"
                         suffix = ""
                     else:
@@ -92,18 +92,18 @@ def identify_observations(headers):
                         calibs[instr].append(prefix + fname + suffix)
 
             append_to_calibs("bias")
-            append_to_calibs("dome")
+            append_to_calibs("flat")
             append_to_calibs("Xe")
             append_to_calibs("Hg")
             append_to_calibs("Cd")
             append_to_calibs("Ne")
             append_to_calibs("twilight")
 
-        if "Focus:" in obj:
+        if "Focus:" in imtype:
             continue
-        if "dark" in obj:
+        if "dark" in imtype:
             continue
-        if "Calib" in obj:
+        if "speccal" in fname:
             continue
         if "STOW" in name:
             continue
@@ -174,10 +174,10 @@ crr_b_% : b_%
 		--sigclip 5.0 --fsmode convolve --psfmodel gauss --psffwhm=2 \\
 		$< $@ mask$@
 
-bias: bias0.1.fits bias2.0.fits $(BIAS)
+bias: bias0.fits bias1.fits $(BIAS)
 crrs: $(CRRS)
 
-$(BIAS): bias0.1.fits bias2.0.fits
+$(BIAS): bias0.fits bias1.fits
 	$(BSUB) $(subst b_,,$@)
 
 $(CRRS): 
@@ -222,10 +222,10 @@ bs_crr_b_%.gz : crr_b_%
 
 .PHONY: report finalreport
 
-bias: bias0.1.fits bias2.0.fits $(BIAS)
+bias: bias0.fits bias1.fits $(BIAS)
 crrs: $(CRRS)
 
-$(BIAS): bias0.1.fits bias2.0.fits
+$(BIAS): bias0.fits bias1.fits
 	$(BSUB) $(subst b_,,$@)
 
 $(CRRS): 

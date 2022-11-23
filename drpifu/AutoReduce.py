@@ -48,6 +48,9 @@ import argparse
 import ephem
 import smtplib
 from email.message import EmailMessage
+
+import numpy as np
+
 import db.SedmDb
 
 from astropy.time import Time
@@ -61,7 +64,7 @@ except ImportError:
     import growth.marshal_commenter as mc
 
 try:
-    import rcimg
+    import rcimgobj
 except ImportError:
     import drprc.rcimg as rcimg
 
@@ -176,10 +179,10 @@ def bias_ready(caldir='./'):
 
     # Do we have all the calibration files?
     # Check biases first
-    fb = os.path.exists(os.path.join(caldir, 'bias0.1.fits'))
-    f2 = os.path.exists(os.path.join(caldir, 'bias2.0.fits'))
-    logging.info("Biases ready?: bias0.1: %d, bias2.0: %d" % (fb, f2))
-    if fb and f2:
+    f0 = os.path.exists(os.path.join(caldir, 'bias0.fits'))
+    f1 = os.path.exists(os.path.join(caldir, 'bias1.fits'))
+    logging.info("Biases ready?: bias0: %d, bias1: %d" % (f0, f1))
+    if f0 and f1:
         ret = True
 
     return ret
@@ -201,10 +204,10 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
 
     """
 
-    nbias = 0
-    bias_done = False 
-    nbias2 = 0
-    bias2_done = False
+    nbias0 = 0  # for mode 0
+    bias0_done = False
+    nbias1 = 0  # for mode 1
+    bias1_done = False
     nxe = 0
     xe_done = False
     nhg = 0
@@ -214,8 +217,8 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
     ndome = 0
     dome_done = False
     ret = False
-    bias_done_str = '10 of 10'
-    lamp_done_str = '5 of 5'
+    # bias_done_str = '10 of 10'
+    # lamp_done_str = '5 of 5'
 
     if test_cal_ims:
         dof = glob.glob(os.path.join(caldir, 'dome.fits'))
@@ -227,7 +230,12 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
 
     else:
         # Get files in calibration directory
-        cflist = sorted(glob.glob(os.path.join(caldir, 'ifu*.fits')))
+        cflist = sorted(glob.glob(os.path.join(caldir, 'speccal*.fits')))
+        # Have arcs started?
+        if np.any(['speccal_hg' in fl for fl in cflist]):
+            bias_done = True
+        else:
+            bias_done = False
         # Are there any files yet?
         if len(cflist) > 0:
             # Loop over files
@@ -236,67 +244,68 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                 # print(os.stat(cal).st_size)
                 if os.stat(cal).st_size >= fsize:
                     # Read FITS header
+                    caltag = cal.split('_')[1]
                     ff = pf.open(cal)
-                    hdr = ff[0].header
+                    if '.fz' in cal:
+                        hdrnum = 1
+                    else:
+                        hdrnum = 0
+                    hdr = ff[hdrnum].header
                     ff.close()
-                    # Get OBJECT keyword
+                    # Get IMGTYPE keyword
                     try:
-                        obj = hdr['OBJECT']
+                        imtype = hdr['IMGTYPE']
                     except KeyError:
-                        obj = ''
-                    # Get ADCSPEED keyword
+                        imtype = ''
+                    # Get MODE_NUM keyword
                     try:
-                        speed = hdr['ADCSPEED']
-                    except:
-                        if hdr['MODE_NUM']==0:
-                            speed = 2.0 #but really 1 MHz
-                        else:
-                            speed = 0.1 #but really 0.5 MHz and mode num could also be different, here until ADCSPEED keyword is included
+                        mode = hdr['MODE_NUM']
+                    except KeyError:
+                        mode = None
 
                     # Check for calibration files
-                    if 'Calib' in obj:
-                        if 'bias' in obj:
-                            if speed == 2.0:
-                                nbias2 += 1
-                                if bias_done_str in obj:
-                                    bias2_done = True
-                            if speed == 0.1:
-                                nbias += 1
-                                if bias_done_str in obj:
-                                    bias_done = True
-                        if 'Xe' in obj or 'xenon' in obj:
-                            nxe += 1
-                            if lamp_done_str in obj:
-                                xe_done = True
-                        if 'dome' in obj:
-                            ndome += 1
-                            if lamp_done_str in obj:
-                                dome_done = True
-                        if 'Hg' in obj:
-                            nhg += 1
-                            if lamp_done_str in obj:
-                                hg_done = True
-                        if 'Cd' in obj:
-                            ncd += 1
-                            if lamp_done_str in obj:
-                                cd_done = True
+                    if 'bias' in imtype:
+                        if mode == 0:
+                            nbias0 += 1
+                            if bias_done and nbias0 == 10:
+                                bias0_done = True
+                        if mode == 1:
+                            nbias1 += 1
+                            if bias_done and nbias1 == 10:
+                                bias1_done = True
+                    if 'illum' in imtype and caltag == 'xe':
+                        nxe += 1
+                        if nxe == 5:
+                            xe_done = True
+                    if 'flat' in imtype:
+                        ndome += 1
+                        if ndome == 5:
+                            dome_done = True
+                    if 'illum' in imtype and caltag == 'hg':
+                        nhg += 1
+                        if nhg == 5:
+                            hg_done = True
+                    if 'illum' in imtype and caltag == 'cd':
+                        ncd += 1
+                        if ncd == 5:
+                            cd_done = True
 
             # Do we have the ideal number of calibration files?
-            if ((nbias2 >= 5 or bias2_done) and (nbias >= 5 or bias_done) and
+            if ((nbias0 >= 10 or bias0_done) and (nbias1 >= 5 or bias1_done) and
                     (nxe >= 5 or xe_done) and (ndome >= 5 or dome_done) and
                     (nhg >= 5 or hg_done) and (ncd >= 5 or cd_done)):
                 ret = True
             # Do we have the minimum allowed number of calibration files?
             if mintest:
-                if (nbias2 >= 5 and nbias >= 5 and nxe >= 3 and ndome >= 3 and
+                if (nbias0 >= 5 and nbias1 >= 3 and nxe >= 3 and ndome >= 3 and
                         nhg >= 3 and ncd >= 3):
                     ret = True
-        logging.info("bias2.0: %d, bias0.1: %d, dome: %d, "
+        logging.info("bias0: %d, bias1: %d, dome: %d, "
                      "Xe: %d, Hg: %d, Cd: %d" %
-                     (nbias2, nbias, ndome, nxe, nhg, ncd))
+                     (nbias0, nbias1, ndome, nxe, nhg, ncd))
         sys.stdout.flush()
         # Should we process biases?
-        if nbias2 >= 10 and nbias >= 5 and ncp > 0:
+        if nbias0 >= 10 and nbias1 >= 5 and ncp > 0:
             proc_bias_crrs(ncp=ncp)
     return ret
     # END: cal_proc_ready
@@ -331,12 +340,12 @@ def docp(src, dest, onsky=True, verbose=False, skip_cals=False, nodb=False):
     ff = pf.open(src)
     hdr = ff[0].header
     ff.close()
-    # Get OBJECT and DOMEST keywords
+    # Get IMGTYPE and DOMEST keywords
     try:
-        obj = hdr['OBJECT']
+        imtype = hdr['IMGTYPE']
     except KeyError:
-        logging.warning("Could not find OBJECT keyword, setting to Test")
-        obj = 'Test'
+        logging.warning("Could not find IMGTYPE keyword, setting to Test")
+        imtype = 'Test'
     try:
         dome = hdr['DOMEST']
     except KeyError:
@@ -350,22 +359,22 @@ def docp(src, dest, onsky=True, verbose=False, skip_cals=False, nodb=False):
     else:
         # Skip test and Focus images
         if skip_cals:
-            copy_this = ('test' not in obj and 'Focus:' not in obj and
-                         'STOW' not in obj and 'Test' not in obj and
-                         'Calib:' not in obj)
+            copy_this = ('test' not in imtype and 'Focus:' not in imtype and
+                         'STOW' not in imtype and 'Test' not in imtype and
+                         'speccal' not in src)
         else:
-            copy_this = ('test' not in obj and 'Focus:' not in obj and
-                         'STOW' not in obj and 'Test' not in obj)
+            copy_this = ('test' not in imtype and 'Focus:' not in imtype and
+                         'STOW' not in imtype and 'Test' not in imtype)
 
         if copy_this:
             # Symlink to save disk space
             os.symlink(src, dest)
-            if 'STD-' in obj:
+            if 'STD-' in src:
                 nstd = 1
-                logging.info("Standard %s linked to %s" % (obj, dest))
+                logging.info("Standard %s linked to %s" % (src, dest))
             else:
                 nobj = 1
-                logging.info('Target %s linked to %s' % (obj, dest))
+                logging.info('Target %s linked to %s' % (src, dest))
             ncp = 1
             if 'REQ_ID' in hdr and 'OBJ_ID' in hdr:
                 if not nodb:
@@ -383,11 +392,11 @@ def docp(src, dest, onsky=True, verbose=False, skip_cals=False, nodb=False):
                                 " no db update")
         # Report skipping and type
         else:
-            if verbose and 'test' in obj:
+            if verbose and 'test' in imtype:
                 logging.info('test file %s not linked' % src)
-            if verbose and 'Focus:' in obj:
+            if verbose and 'Focus:' in imtype:
                 logging.info('Focus file %s not linked' % src)
-            if verbose and 'Calib:' in obj:
+            if verbose and 'speccal' in src:
                 logging.info('calib file %s not linked' % src)
 
     return ncp, nstd, nobj
@@ -423,9 +432,9 @@ def update_observation(input_fitsfile):
         hk = header_dict[key]
         if hk in ff[0].header:
             if key == 'dec':
-                obs_dict[key] = Angle(ff[0].header[hk]+' degrees').degree
+                obs_dict[key] = Angle(ff[0].header[hk] + ' degrees').degree
             elif key == 'ra':
-                obs_dict[key] = Angle(ff[0].header[hk]+' hours').degree
+                obs_dict[key] = Angle(ff[0].header[hk] + ' hours').degree
             else:
                 obs_dict[key] = ff[0].header[hk]
         else:
@@ -457,13 +466,13 @@ def update_calibration(utdate, src_dir=_reduxpath):
         else:
             logging.info("spec cal item not found: %s" % dome_master)
 
-        bias_slow_master = os.path.join(src, 'bias0.1.fits')
+        bias_slow_master = os.path.join(src, 'bias1.fits')
         if os.path.exists(bias_slow_master):
             spec_calib_dict['bias_slow_master'] = bias_slow_master
         else:
             logging.info("spec cal item not found: %s" % bias_slow_master)
 
-        bias_fast_master = os.path.join(src, 'bias2.0.fits')
+        bias_fast_master = os.path.join(src, 'bias0.fits')
         if os.path.exists(bias_fast_master):
             spec_calib_dict['bias_fast_master'] = bias_fast_master
         else:
@@ -544,10 +553,10 @@ def update_calibration(utdate, src_dir=_reduxpath):
                         spec_calib_dict['wave_rms_min'] = \
                             float(stat_line.split()[-1])
                     elif 'AvgRMS' in stat_line:
-                        spec_calib_dict['wave_rms_avg'] =\
+                        spec_calib_dict['wave_rms_avg'] = \
                             float(stat_line.split()[-1])
                     elif 'MaxRMS' in stat_line:
-                        spec_calib_dict['wave_rms_max'] =\
+                        spec_calib_dict['wave_rms_max'] = \
                             float(stat_line.split()[-1])
                     stat_line = sf.readline()
         else:
@@ -607,11 +616,13 @@ def proc_bias_crrs(ncp=1, piggyback=False):
         ret = True
     else:
         # Get new listing
-        retcode = subprocess.call("spy what ifu*.fits > what.list",
+        califufiles = sorted(glob.glob('speccal*.fits'))
+        objifufiles = sorted(glob.glob('*ifu*.fits'))
+        retcode = subprocess.call(f"spy what {califufiles + objifufiles} > what.list",
                                   shell=True)
         if retcode == 0:
             # Generate new Makefile
-            retcode = subprocess.call("spy plan ifu*.fits", shell=True)
+            retcode = subprocess.call(f"spy plan {califufiles + objifufiles}", shell=True)
             if retcode == 0:
                 # Make bias + bias subtraction
                 retcode = subprocess.call(("make", "-j", "16", "bias"))
@@ -664,7 +675,7 @@ def cpsci(srcdir, destdir='./', fsize=8400960, datestr=None, nodb=False):
     """
 
     # Get files in destination directory
-    dflist = sorted(glob.glob(os.path.join(destdir, 'ifu*.fits')))
+    dflist = sorted(glob.glob(os.path.join(destdir, '*ifu*.fits')))
     # Record copies and standard star observations
     ncp = 0
     nstd = 0
@@ -673,7 +684,7 @@ def cpsci(srcdir, destdir='./', fsize=8400960, datestr=None, nodb=False):
     stds = []
     sciobj = []
     # Get list of source files
-    srcfiles = sorted(glob.glob(os.path.join(srcdir, 'ifu*.fits')))
+    srcfiles = sorted(glob.glob(os.path.join(srcdir, '*ifu*.fits')))
     # Loop over source files
     for fl in srcfiles:
         # get base filename
@@ -739,7 +750,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
     ncp = 0
     copied = []
     # Get list of source files in destination directory
-    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_ifu*.fits')))
+    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_*ifu*.fits')))
     # Loop over source files
     for fl in srcfiles:
         # get base filename
@@ -764,10 +775,10 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                 dome = hdr['DOMEST']
             except KeyError:
                 logging.warning(
-                    "Could not find DOMEST keyword, settting to null")
+                    "Could not find DOMEST keyword, setting to null")
                 dome = ''
             # skip Cal files
-            if 'Calib:' in obj:
+            if 'speccal' in fl:
                 continue
             # skip if dome closed
             if 'CLOSED' in dome or 'closed' in dome:
@@ -778,7 +789,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
             copied.append(fn)
             ncp += 1
             # are we a standard star?
-            if 'STD-' in obj:
+            if 'STD-' in fl:
                 e3d_good = make_e3d(fnam=fl, destdir=destdir, datestr=datestr,
                                     nodb=nodb, sci=False, hdr=None,
                                     guider_movie=guider_movie)
@@ -1153,7 +1164,7 @@ def update_spec(input_specfile, update_db=False, nopush_marshal=False):
                     b_a = ff[0].header['PSFAB']
                     smaja = ff[0].header['PSFFWHM']
                     smina = smaja * b_a
-                    spec_dict['psf_ell'] = (smaja - smina)/smaja
+                    spec_dict['psf_ell'] = (smaja - smina) / smaja
                 except TypeError:
                     logging.warning("PSF values contain NaN")
             else:
@@ -1248,7 +1259,7 @@ def update_spec(input_specfile, update_db=False, nopush_marshal=False):
 
     # Get cube id
     cube_id = sedmdb.get_from_cube(['id'], {'observation_id':
-                                            spec_dict['observation_id']})
+                                                spec_dict['observation_id']})
     if cube_id:
         spec_dict['cube_id'] = cube_id[0][0]
     else:
@@ -1312,7 +1323,7 @@ def update_cube(input_fitsfile):
     root = input_fitsfile.split('/')[-1].split('.fits')[0]
     indir = '/'.join(input_fitsfile.split('/')[:-1])
     utdate = indir.split('/')[-1]
-    cube_list = glob.glob(os.path.join(indir, 'e3d_'+root+'_*.fits'))
+    cube_list = glob.glob(os.path.join(indir, 'e3d_' + root + '_*.fits'))
 
     # Check list
     if len(cube_list) != 1:
@@ -1335,7 +1346,7 @@ def update_cube(input_fitsfile):
     sedmdb = db.SedmDb.SedmDB()
 
     # Get observation id
-    fitsfile = 'ifu'+input_fitsfile.split('_ifu')[-1]
+    fitsfile = 'ifu' + input_fitsfile.split('_ifu')[-1]
     observation_id = sedmdb.get_from_observation(['id'],
                                                  {'fitsfile': fitsfile},
                                                  {'fitsfile': '~'})
@@ -1585,13 +1596,13 @@ def cpprecal(dirlist, destdir='./', fsize=8400960, nodb=False):
     # current source dir
     cdate = dirlist[-1].split('/')[-1]
     # convert to JD
-    ctime = Time(cdate[0:4]+'-'+cdate[4:6]+'-'+cdate[6:])
+    ctime = Time(cdate[0:4] + '-' + cdate[4:6] + '-' + cdate[6:])
     cjd = ctime.jd
     #
     # previous source dir
     pdate = dirlist[-2].split('/')[-1]
     # convert to JD
-    ptime = Time(pdate[0:4]+'-'+pdate[4:6]+'-'+pdate[6:])
+    ptime = Time(pdate[0:4] + '-' + pdate[4:6] + '-' + pdate[6:])
     pjd = ptime.jd
     # Record how many images copied
     ncp = 0
@@ -1601,7 +1612,7 @@ def cpprecal(dirlist, destdir='./', fsize=8400960, nodb=False):
         srcdir = dirlist[-2]
         # Get list of previous night's raw cal files
         # (within four hours of day changeover)
-        fspec = os.path.join(srcdir, "ifu%s_2*.fits" % pdate)
+        fspec = os.path.join(srcdir, "speccal*%s_2*.fits" % pdate)
         flist = sorted(glob.glob(fspec))
         # Loop over file list
         for src in flist:
@@ -1610,35 +1621,34 @@ def cpprecal(dirlist, destdir='./', fsize=8400960, nodb=False):
                 ff = pf.open(src)
                 hdr = ff[0].header
                 ff.close()
-                # Get OBJECT keyword
-                obj = hdr['OBJECT']
+                # Get IMGTYPE keyword
+                imtype = hdr['IMGTYPE']
                 # Filter Calibs and avoid test images
-                if 'Calib' in obj and 'of' in obj and 'test' not in obj and \
-                        'Test' not in obj:
+                if 'test' not in imtype and 'Test' not in imtype:
                     # Copy cal images
                     imf = src.split('/')[-1]
                     destfil = os.path.join(destdir, imf)
                     exptime = hdr['EXPTIME']
-                    lampcur = hdr['LAMPCUR']
+                    # lampcur = hdr['LAMPCUR']
                     # Check for dome exposures
-                    if 'dome' in obj:
-                        if exptime >= 60. and ('dome' in obj and
-                                               'Xe' not in obj and
-                                               'Hg' not in obj and 
-                                               'Cd' not in obj):
-                            if lampcur > 0.0:
-                                # Copy dome images
-                                if not os.path.exists(destfil):
-                                    nc, ns, nob = docp(src, destfil,
-                                                       onsky=False,
-                                                       verbose=True,
-                                                       nodb=nodb)
-                                    ncp += nc
-                            else:
-                                logging.warning("Bad dome - lamp not on: %s"
-                                                % src)
+                    if 'flat' in imtype:
+                        if exptime >= 5. and ('flat' in imtype and
+                                              'xe' not in src and
+                                              'hg' not in src and
+                                              'cd' not in src):
+                            # if lampcur > 0.0:
+                            # Copy dome images
+                            if not os.path.exists(destfil):
+                                nc, ns, nob = docp(src, destfil,
+                                                   onsky=False,
+                                                   verbose=True,
+                                                   nodb=nodb)
+                                ncp += nc
+                            # else:
+                            #     logging.warning("Bad dome - lamp not on: %s"
+                            #                     % src)
                     # Check for arcs
-                    elif 'Xe' in obj or 'Cd' in obj or 'Hg' in obj:
+                    elif 'illum' in imtype and 'xe' in src or 'cd' in src or 'hg' in src:
                         if exptime > 25.:
                             # Copy arc images
                             if not os.path.exists(destfil):
@@ -1646,7 +1656,7 @@ def cpprecal(dirlist, destdir='./', fsize=8400960, nodb=False):
                                                    verbose=True, nodb=nodb)
                                 ncp += nc
                     # Check for biases
-                    elif 'bias' in obj:
+                    elif 'bias' in imtype:
                         if exptime <= 0.:
                             # Copy bias images
                             if not os.path.exists(destfil):
@@ -1681,7 +1691,7 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
     sdate = srcdir.split('/')[-1]
     # Get list of current raw calibration files
     # (within 10 hours of day changeover)
-    fspec = os.path.join(srcdir, "ifu%s_*.fits" % sdate)
+    fspec = os.path.join(srcdir, "speccal*%s_0*.fits" % sdate)
     flist = sorted(glob.glob(fspec))
     # Record number copied
     ncp = 0
@@ -1705,39 +1715,39 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
             ff = pf.open(src)
             hdr = ff[0].header
             ff.close()
-            # Get OBJECT keyword
+            # Get IMGTYPE keyword
             try:
-                obj = hdr['OBJECT']
+                imtype = hdr['IMGTYPE']
             except KeyError:
-                obj = ''
+                imtype = ''
             # Filter Calibs and avoid test images and be sure it is part of
             # a series.
-            if 'Calib' in obj and 'of' in obj:
+            if 'test' not in imtype and 'Test' not in imtype:
                 exptime = hdr['EXPTIME']
-                lampcur = hdr['LAMPCUR']
+                # lampcur = hdr['LAMPCUR']
                 # Check for dome exposures
-                if 'dome' in obj:
-                    if exptime >= 5. and ('dome' in obj and
-                                           'Xe' not in obj and
-                                           'Hg' not in obj and 
-                                           'Cd' not in obj):
-                        if lampcur > 0.0:
-                            # Copy dome images
-                            print('here')
-                            nc, ns, nob = docp(src, destfil, onsky=False,
-                                               verbose=True, nodb=nodb)
-                            ncp += nc
-                        else:
-                            logging.warning("Bad dome - lamp not on: %s" % src)
+                if 'flat' in imtype:
+                    if exptime >= 5. and ('flat' in imtype and
+                                          'xe' not in src and
+                                          'hg' not in src and
+                                          'cd' not in src):
+                        # if lampcur > 0.0:
+                        # Copy dome images
+                        print('here')
+                        nc, ns, nob = docp(src, destfil, onsky=False,
+                                           verbose=True, nodb=nodb)
+                        ncp += nc
+                        # else:
+                        #     logging.warning("Bad dome - lamp not on: %s" % src)
                 # Check for arcs
-                elif 'Xe' in obj or 'Cd' in obj or 'Hg' in obj:
+                elif 'illum' in imtype and 'xe' in src or 'cd' in src or 'hg' in src:
                     if exptime > 25.:
                         # Copy arc images
                         nc, ns, nob = docp(src, destfil, onsky=False,
                                            verbose=True, nodb=nodb)
                         ncp += nc
                 # Check for biases
-                elif 'bias' in obj:
+                elif 'bias' in imtype:
                     if exptime <= 0.:
                         # Copy bias images
                         nc, ns, nob = docp(src, destfil, onsky=False,
@@ -1784,9 +1794,9 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
     """
     # Set up Observatory params
     p60 = ephem.Observer()
-    p60.lat = '33:21:00'
-    p60.lon = '-116:52:00'
-    p60.elevation = 1706
+    p60.lat = '31:57:30' #kp
+    p60.lon = '-115:35:48' #kp
+    p60.elevation = 2096 #kp
     sun = ephem.Sun()
 
     # Source directory is most recent raw dir
@@ -1807,10 +1817,13 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
     # Go there
     os.chdir(outdir)
     if indir is not None:
-        fl = glob.glob("ifu*.fits")
+        # fzfiles = sorted(glob.glob("*.fits.fz"))
+        # for fzfl in fzfiles:
+        #     subprocess.call(["funpack", fzfl])
+        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
         if len(fl) > 0:
             # Generate new Makefile
-            retcode = subprocess.call("spy plan ifu*.fits", shell=True)
+            retcode = subprocess.call(f"spy plan {fl}", shell=True)
             if retcode != 0:
                 logging.warning("Error making plan in %s" % indir)
         else:
@@ -1882,7 +1895,8 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                     break
             else:
                 # Get new listing
-                retcode = subprocess.call("spy what ifu*.fits > what.list",
+                fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
+                retcode = subprocess.call(f"spy what {fl} > what.list",
                                           shell=True)
                 # Link what.txt
                 if not os.path.islink(os.path.join('what.txt')):
@@ -1907,7 +1921,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                 subprocess.call(cmd)
                 procg_time = int(time.time() - start_time)
                 if os.path.exists(
-                   os.path.join(outdir, cur_date_str + '_HexaGrid.pkl')):
+                        os.path.join(outdir, cur_date_str + '_HexaGrid.pkl')):
                     # Process wavelengths
                     start_time = time.time()
                     # Spawn nsub sub-processes to solve wavelengths faster
@@ -1939,7 +1953,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                                      "--merge"))
                 procw_time = int(time.time() - start_time)
                 if os.path.exists(
-                   os.path.join(outdir, cur_date_str + '_WaveSolution.pkl')):
+                        os.path.join(outdir, cur_date_str + '_WaveSolution.pkl')):
                     # Process flat
                     start_time = time.time()
                     cmd = ("ccd_to_cube.py", cur_date_str, "--flat")
@@ -1960,7 +1974,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                 # Make cube report
                 cmd = f"python {SEDMPYPATH}/drpifu/CubeReport.py %s" % cur_date_str
                 if not local:
-                    cmd += " --slack"   # send to slack pysedm_report channel
+                    cmd += " --slack"  # send to slack pysedm_report channel
                 logging.info(cmd)
                 subprocess.call(cmd, shell=True)
         # Check status
@@ -1983,8 +1997,8 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
             ncw = find_recent(redd, '_WaveSolution.pkl', outdir, cur_date_str)
             ncf = find_recent(redd, '_Flat.fits', outdir, cur_date_str)
             if not bias_ready(outdir):
-                ncb = find_recent_bias(redd, 'bias0.1.fits', outdir)
-                nc2 = find_recent_bias(redd, 'bias2.0.fits', outdir)
+                ncb = find_recent_bias(redd, 'bias1.fits', outdir)
+                nc2 = find_recent_bias(redd, 'bias0.fits', outdir)
             else:
                 ncb = True
                 nc2 = True
@@ -2113,20 +2127,20 @@ def clean_post_redux(outdir, utdstr):
     """Remove/compress unused files after reduction"""
     ndel = 0
     # Remove raw file links
-    flist = glob.glob(os.path.join(outdir, "ifu%s_*.fits" % utdstr))
-    flist.extend(glob.glob(os.path.join(outdir, 'rc%s_*.fits' % utdstr)))
+    flist = glob.glob(os.path.join(outdir, "*ifu%s_*.fits" % utdstr))
+    flist.extend(glob.glob(os.path.join(outdir, '*rc%s_*.fits' % utdstr)))
     for fl in flist:
         if os.path.islink(fl):
             os.remove(fl)
             ndel += 1
     # Remove intermediate processing files
-    flist = glob.glob(os.path.join(outdir, "b_ifu*.fits"))
+    flist = glob.glob(os.path.join(outdir, "b_*.fits"))
     for fl in flist:
         os.remove(fl)
         ndel += 1
     # Remove intermediate calib files, compress others
     n_gzip = 0
-    flist = glob.glob(os.path.join(outdir, "*crr_b_ifu*.fits"))
+    flist = glob.glob(os.path.join(outdir, "*crr_b_*.fits"))
     for fl in flist:
         if 'failed' in fl:
             continue
@@ -2134,16 +2148,16 @@ def clean_post_redux(outdir, utdstr):
         hdr = ff[0].header
         ff.close()
         try:
-            obj = hdr['OBJECT']
+            imtype = hdr['IMGTYPE']
         except KeyError:
-            obj = 'Test'
-        if 'Calib' in obj:
+            imtype = 'Test'
+        if 'speccal' in fl:
             os.remove(fl)
             ndel += 1
         else:
             rute = fl.split('/')[-1]
-            if rute.startswith('maskcrr_') or rute.startswith('crr_b_ifu') or \
-                    rute.startswith('bkgd_crr_b_ifu') or \
+            if rute.startswith('maskcrr_') or rute.startswith('crr_b_') or \
+                    rute.startswith('bkgd_crr_b_') or \
                     rute.startswith('forcepsf') or \
                     rute.startswith('guider_crr_b'):
                 subprocess.call(["gzip", fl])
