@@ -2281,7 +2281,7 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
     else:
         indir = os.path.join(rawd, indate)
         # Fix headers for SEDMv2
-        # subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}',shell=True)
+        subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}',shell=True)
 
         logging.info("Processing raw data from %s" % indir)
         stat = obs_loop(rawlist, redd, check_precal=check_precal, indir=indir,
