@@ -1715,8 +1715,8 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
             ff = pf.open(src)
             hdr = ff[0].header
             ff.close()
-            print(src)
-            print(hdr)
+            # print(src)
+            # print(hdr)
             # Get IMGTYPE keyword
             try:
                 imtype = hdr['IMGTYPE']
