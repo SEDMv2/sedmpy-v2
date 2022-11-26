@@ -72,7 +72,7 @@ def identify_observations(headers):
 
             def append_to_calibs(instr):
 
-                if instr in imtype:
+                if instr.lower() == fname.split('_')[1] or instr in imtype:
                     if "bias" in instr and exptime == 0.:
                         instr = "%s%1.0f" % (instr, mode)
                         prefix = ""
@@ -205,7 +205,7 @@ FRITZUPLOAD = $(PY) $(PYF)/fritz.py
 BSUB = $(PY) $(PYC)/Debias.py
 CRRSUB =  $(PY) $(PYC)/CosmicX.py
 
-SRCS = $(wildcard ifu*fits)
+SRCS = $(wildcard speccal_fl*fits speccal_cd*fits speccal_hg*fits speccal_xe*fits *ifu*.fits)
 BIAS = $(addprefix b_,$(SRCS))
 CRRS = $(addprefix crr_,$(BIAS))
 
