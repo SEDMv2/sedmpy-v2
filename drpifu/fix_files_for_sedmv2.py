@@ -105,6 +105,6 @@ if __name__ == '__main__':
     # change_filenames(args.date)
     files = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/speccal*.fits.fz'))
     for fl in files:
-        subprocess.call(f"funpack {fl}")
+        subprocess.call(f"funpack -F {fl}")
         add_header_keywords(fl[0:-3])
         rotate_image(fl[0:-3])
