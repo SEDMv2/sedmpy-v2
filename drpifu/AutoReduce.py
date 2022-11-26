@@ -617,11 +617,11 @@ def proc_bias_crrs(ncp=1, piggyback=False):
     else:
         # Get new listing
         fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
-        retcode = subprocess.call(f"spy what {*fl} > what.list",
+        retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
                                   shell=True)
         if retcode == 0:
             # Generate new Makefile
-            retcode = subprocess.call(f"spy plan {*fl}", shell=True)
+            retcode = subprocess.call(f"spy plan {' '.join(fl)}", shell=True)
             if retcode == 0:
                 # Make bias + bias subtraction
                 retcode = subprocess.call(("make", "-j", "16", "bias"))
@@ -1824,7 +1824,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
         fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
         if len(fl) > 0:
             # Generate new Makefile
-            retcode = subprocess.call(f"spy plan {*fl}", shell=True)
+            retcode = subprocess.call(f"spy plan {' '.join(fl)}", shell=True)
             if retcode != 0:
                 logging.warning("Error making plan in %s" % indir)
         else:
@@ -1897,7 +1897,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
             else:
                 # Get new listing
                 fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
-                retcode = subprocess.call(f"spy what {*fl} > what.list",
+                retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
                                           shell=True)
                 # Link what.txt
                 if not os.path.islink(os.path.join('what.txt')):
