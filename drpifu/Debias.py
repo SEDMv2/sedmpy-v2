@@ -17,7 +17,7 @@ Note:
 import time
 import numpy as np
 import astropy.io.fits as pf
-import scipy.ndimage.filters as FI
+from scipy.ndimage  import median_filter
 import sedmpy_version
 
 drp_ver = sedmpy_version.__version__
@@ -53,7 +53,7 @@ def full_frame(dat):
 
     bias = np.nanmedian(dat[:, 2045:], axis=1)
     bias = bias.astype(np.float32)
-    smooth = FI.median_filter(bias, size=50)
+    smooth = median_filter(bias, size=50)
 
     return np.tile(smooth, (2048, 1))
 
