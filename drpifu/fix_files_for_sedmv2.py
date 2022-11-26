@@ -91,7 +91,7 @@ def rotate_image(filename):
         # fits.setval(filename,'ROTFLIP',value=1)
         return
     data = np.fliplr(np.rot90(hdu.data))
-    fits.HDUList([fits.PrimaryHDU(data, header=hdr)]).writeto(filename[0:-3], overwrite=True)
+    fits.HDUList([fits.PrimaryHDU(data, header=hdr)]).writeto(filename, overwrite=True)
     fits.setval(filename, 'ROTFLIP', value=1)
     print('Rotated and flipped ', filename)
 
@@ -105,5 +105,6 @@ if __name__ == '__main__':
     # change_filenames(args.date)
     files = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/speccal*.fits.fz'))
     for fl in files:
-        add_header_keywords(fl)
-        rotate_image(fl)
+        subprocess.call(f"funpack {fl}")
+        add_header_keywords(fl[0:-3])
+        rotate_image(fl[0:-3])
