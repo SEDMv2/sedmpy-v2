@@ -77,7 +77,11 @@ def identify_observations(headers):
                         instr = "%s%1.0f" % (instr, mode)
                         prefix = ""
                         suffix = ""
-                    elif "illum" in instr or "flat" in instr:
+                    elif "illum" in instr:
+                        prefix = "b_"
+                        suffix = ""
+                    elif "flat" in instr:
+                        instr = "dome"
                         prefix = "b_"
                         suffix = ""
                     else:
