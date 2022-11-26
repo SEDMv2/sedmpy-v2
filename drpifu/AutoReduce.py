@@ -291,13 +291,13 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                             cd_done = True
 
             # Do we have the ideal number of calibration files?
-            if ((nbias0 >= 10 or bias0_done) and (nbias1 >= 5 or bias1_done) and
+            if ((nbias0 >= 10 or bias0_done) and (nbias1 >= 1 or bias1_done) and
                     (nxe >= 5 or xe_done) and (ndome >= 5 or dome_done) and
                     (nhg >= 5 or hg_done) and (ncd >= 5 or cd_done)):
                 ret = True
             # Do we have the minimum allowed number of calibration files?
             if mintest:
-                if (nbias0 >= 5 and nbias1 >= 3 and nxe >= 3 and ndome >= 3 and
+                if (nbias0 >= 5 and nbias1 >= 1 and nxe >= 3 and ndome >= 3 and
                         nhg >= 3 and ncd >= 3):
                     ret = True
         logging.info("bias0: %d, bias1: %d, dome: %d, "
