@@ -1928,7 +1928,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                     # Spawn nsub sub-processes to solve wavelengths faster
                     nsub = 8
                     cmd = ("derive_wavesolution.py", cur_date_str,
-                           "--nsub", "%d" % nsub)
+                           "--nsub", "%d" % nsub, "--wavesolplots")
                     logging.info(" ".join(cmd))
                     subprocess.Popen(cmd)
                     time.sleep(60)
