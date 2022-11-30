@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     # Move darks to unused directory
     if glob2.glob(f'{SEDMRAWPATH}/{args.date}/unused') == []:
-        os.mkdir('unused')
+        os.mkdir(f'{SEDMRAWPATH}/{args.date}/unused')
     darkfiles = glob2.glob(f'{SEDMRAWPATH}/{args.date}/speccal_dk*')
     for df in darkfiles:
         subprocess.call(f'mv {df} {SEDMRAWPATH}/{args.date}/unused/', shell=True)
