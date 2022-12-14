@@ -218,7 +218,7 @@ current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 
 crr_b_% : b_%
 	$(CRRSUB) --niter 4 --sepmed --gain 1.0 --readnoise 5.0 --objlim 4.8 \\
-		--sigclip 5.0 --fsmode convolve --psfmodel gaussy --psffwhm=2 \\
+		--sigclip 5.0 --fsmode convolve --psfmodel gauss --psffwhm=2 \\
 		$< $@ mask$@
 
 bs_crr_b_%.gz : crr_b_%
@@ -234,7 +234,7 @@ $(BIAS): bias0.fits bias1.fits
 
 $(CRRS): 
 	$(CRRSUB) --niter 4 --sepmed --gain 1.0 --readnoise 5.0 --objlim 4.8 \\
-		--sigclip 5.0 --fsmode convolve --psfmodel gaussy --psffwhm=2 \\
+		--sigclip 5.0 --fsmode convolve --psfmodel gauss --psffwhm=2 \\
 		$(subst crr_,,$@) $@ mask$@
 
 calimgs: dome.fits Hg.fits Cd.fits Xe.fits

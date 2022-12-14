@@ -55,7 +55,7 @@ if __name__ == '__main__':
             'meanmask': A masked 5x5 mean filter
             'idw': A masked 5x5 inverse distance weighted interpolation
             Default: "meanmask".""")
-    parser.add_argument("--satlevel", type=float, default=50000.0, help="""If we find agglomerations of pixels above this level, we consider it to be a saturated star and do not try to correct and pixels around it. A negative satlevel skips this feature.""")
+    parser.add_argument("--satlevel", type=float, default=60000.0, help="""If we find agglomerations of pixels above this level, we consider it to be a saturated star and do not try to correct and pixels around it. A negative satlevel skips this feature.""")
     parser.add_argument("--verbose", action="store_true", default=False, help="""Flag to print some progress information on the screen.""")
     parser.add_argument("--sepmed", action="store_true", default=False, help="""Flag to use separable median (faster).""")
     parser.add_argument("--niter", type=int, default=4, help="""Number of iteration to be performed by the algorithms. Usually 5-6 iterations are needed to converge to a stable solution.""")
