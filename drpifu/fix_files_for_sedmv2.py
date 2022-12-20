@@ -22,7 +22,7 @@ def change_filenames(date):
             subprocess.call(f'mv {fl} {SEDMRAWPATH}/{date}/{newfname}', shell=True)
 
 
-def add_header_keywords(filename):
+def add_header_keywords(filename,sciexptime=60):
     if '.fz' in filename:
         hdrnum = 1
     else:
@@ -77,6 +77,9 @@ def add_header_keywords(filename):
     if ('object' in hdr['IMGTYPE']):
         fits.setval(filename, 'DOMEST', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
+        fits.setval(filename, 'EXPTIME', value=sciexptime)
+        fits.setval(filename, 'CRVAL1', value=155.4749009102372)
+        fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     print('Added relevant keywords to ', filename)
 
 
@@ -114,3 +117,11 @@ if __name__ == '__main__':
         subprocess.call(f"funpack -F {fl}", shell=True)
         add_header_keywords(fl[0:-3])
         rotate_image(fl[0:-3])
+
+    # change_filenames(args.date) for sci
+    scifiles = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/spec_*.fits'))
+    for fl in scifiles:
+        print(fl)
+        sciexptime = float(input('Input exptime for this file: '))
+        add_header_keywords(fl,sciexptime)
+        rotate_image(fl)

@@ -18,6 +18,8 @@ import time
 import numpy as np
 import astropy.io.fits as pf
 from scipy.ndimage  import median_filter
+import sys
+sys.path.append('/media/yashvi/Data/Work/SEDMv2/sedmpy-v2')
 import sedmpy_version
 
 drp_ver = sedmpy_version.__version__
