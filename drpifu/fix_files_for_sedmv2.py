@@ -51,7 +51,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     if ('speccal_xe' in hdr['FILENAME']):
-        fits.setval(filename, 'EXPTIME', value=120)
+        fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMEST', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
         fits.setval(filename, 'OBJECT', value='Calib: Xe of')
@@ -59,7 +59,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     if ('speccal_hg' in hdr['FILENAME']):
-        fits.setval(filename, 'EXPTIME', value=120)
+        fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMEST', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
         fits.setval(filename, 'OBJECT', value='Calib: Hg of')
@@ -67,7 +67,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     if ('speccal_cd' in hdr['FILENAME']):
-        fits.setval(filename, 'EXPTIME', value=120)
+        fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMEST', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
         fits.setval(filename, 'OBJECT', value='Calib: Cd of')
