@@ -1692,6 +1692,10 @@ def cpcal(srcdir, destdir='./', fsize=8400960, nodb=False):
     # (within 10 hours of day changeover)
     fspec = os.path.join(srcdir, "speccal*%s_0*.fits" % sdate)
     flist = sorted(glob.glob(fspec))
+    if len(flist)==0:
+        print('No start of the night cals found, looking for more...')
+        fspec = os.path.join(srcdir, "speccal*%s_*.fits" % sdate)
+        flist = sorted(glob.glob(fspec))
     # Record number copied
     ncp = 0
     # Loop over file list
