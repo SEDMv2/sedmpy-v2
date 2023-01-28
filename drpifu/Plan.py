@@ -15,9 +15,9 @@ def extract_info(infiles):
     has_ifu = False
     for ix, ifile in enumerate(infiles):
         rute = ifile.split('/')[-1]
-        if 'rc' in rute:
+        if 'kped' in rute:
             has_rc = True
-        if 'ifu' in rute:
+        if 'sedm2' in rute:
             has_ifu = True
         ff = pf.open(ifile)
         ff[0].header['filename'] = ifile
@@ -209,7 +209,7 @@ FRITZUPLOAD = $(PY) $(PYF)/fritz.py
 BSUB = $(PY) $(PYC)/Debias.py
 CRRSUB =  $(PY) $(PYC)/CosmicX.py
 
-SRCS = $(wildcard speccal_fl*fits speccal_cd*fits speccal_hg*fits speccal_xe*fits *ifu*.fits)
+SRCS = $(wildcard speccal_fl*fits speccal_cd*fits speccal_hg*fits speccal_xe*fits sedm2*.fits)
 BIAS = $(addprefix b_,$(SRCS))
 CRRS = $(addprefix crr_,$(BIAS))
 

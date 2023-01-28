@@ -340,19 +340,19 @@ def docp(src, dest, onsky=True, verbose=False, skip_cals=False, nodb=False):
     ff = pf.open(src)
     hdr = ff[0].header
     ff.close()
-    # Get IMGTYPE and DOMEST keywords
+    # Get IMGTYPE and DOMESTAT keywords
     try:
         imtype = hdr['IMGTYPE']
     except KeyError:
         logging.warning("Could not find IMGTYPE keyword, setting to Test")
         imtype = 'Test'
     try:
-        dome = hdr['DOMEST']
+        dome = hdr['DOMESTAT'].strip().lower()
     except KeyError:
-        logging.warning("Could not find DOMEST keyword, setting to null")
+        logging.warning("Could not find DOMESTAT keyword, setting to null")
         dome = ''
     # Check if dome conditions are not right
-    if onsky and ('CLOSED' in dome or 'closed' in dome):
+    if onsky and ('closed' in dome):
         if verbose:
             logging.warning('On sky and dome is closed, skipping %s' % src)
     # All other conditions are OK
@@ -616,7 +616,7 @@ def proc_bias_crrs(ncp=1, piggyback=False):
         ret = True
     else:
         # Get new listing
-        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
+        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2_*.fits"))
         retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
                                   shell=True)
         if retcode == 0:
@@ -674,7 +674,7 @@ def cpsci(srcdir, destdir='./', fsize=8400960, datestr=None, nodb=False):
     """
 
     # Get files in destination directory
-    dflist = sorted(glob.glob(os.path.join(destdir, '*ifu*.fits')))
+    dflist = sorted(glob.glob(os.path.join(destdir, 'sedm2_*.fits')))
     # Record copies and standard star observations
     ncp = 0
     nstd = 0
@@ -683,7 +683,7 @@ def cpsci(srcdir, destdir='./', fsize=8400960, datestr=None, nodb=False):
     stds = []
     sciobj = []
     # Get list of source files
-    srcfiles = sorted(glob.glob(os.path.join(srcdir, '*ifu*.fits')))
+    srcfiles = sorted(glob.glob(os.path.join(srcdir, 'sedm2_*.fits')))
     # Loop over source files
     for fl in srcfiles:
         # get base filename
@@ -749,7 +749,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
     ncp = 0
     copied = []
     # Get list of source files in destination directory
-    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_*ifu*.fits')))
+    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_sedm2*.fits')))
     # Loop over source files
     for fl in srcfiles:
         # get base filename
@@ -769,18 +769,18 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                 logging.warning(
                     "Could not find OBJECT keyword, setting to Test")
                 obj = 'Test'
-            # Get DOMEST keyword
+            # Get DOMESTAT keyword
             try:
-                dome = hdr['DOMEST']
+                dome = hdr['DOMESTAT'].strip().lower()
             except KeyError:
                 logging.warning(
-                    "Could not find DOMEST keyword, setting to null")
+                    "Could not find DOMESTAT keyword, setting to null")
                 dome = ''
             # skip Cal files
             if 'speccal' in fl:
                 continue
             # skip if dome closed
-            if 'CLOSED' in dome or 'closed' in dome:
+            if 'closed' in dome:
                 continue
             # make finder
             make_finder(fl)
@@ -1825,7 +1825,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
         # fzfiles = sorted(glob.glob("*.fits.fz"))
         # for fzfl in fzfiles:
         #     subprocess.call(["funpack", fzfl])
-        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
+        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2*.fits"))
         if len(fl) > 0:
             # Generate new Makefile
             retcode = subprocess.call(f"spy plan {' '.join(fl)}", shell=True)
@@ -1900,7 +1900,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                     break
             else:
                 # Get new listing
-                fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("*ifu*.fits"))
+                fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2*.fits"))
                 retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
                                           shell=True)
                 # Link what.txt
