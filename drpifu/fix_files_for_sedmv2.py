@@ -110,9 +110,13 @@ if __name__ == '__main__':
     # change_filenames(args.date)
     files = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/speccal*.fits.fz'))
     for fl in files:
+        subprocess.call(f"cp {fl} {SEDMRAWPATH}/{args.date}/unused/", shell=True)
         subprocess.call(f"funpack -F {fl}", shell=True)
-        add_header_keywords(fl[0:-3])
-        rotate_image(fl[0:-3])
+
+    files = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/speccal*.fits'))
+    for fl in files:
+        add_header_keywords(fl)
+        rotate_image(fl)
 
     # change_filenames(args.date) for sci
     scifiles = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/sedm2_*.fits.fz'))
