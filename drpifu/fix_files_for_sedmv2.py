@@ -46,7 +46,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'NAME', value='dome')
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
-    if ('speccal_xe' in hdr['FILENAME']):
+    if ('speccal_xe' in filename):
         fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMESTAT', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
@@ -54,7 +54,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'NAME', value='Xe')
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
-    if ('speccal_hg' in hdr['FILENAME']):
+    if ('speccal_hg' in filename):
         fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMESTAT', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
@@ -62,7 +62,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'NAME', value='Hg')
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
-    if ('speccal_cd' in hdr['FILENAME']):
+    if ('speccal_cd' in filename):
         fits.setval(filename, 'EXPTIME', value=30)
         fits.setval(filename, 'DOMESTAT', value='closed')
         fits.setval(filename, 'LAMPCUR', value=0.0)
