@@ -29,7 +29,7 @@ try:
 except ImportError:
     import AutoReduce as drp
 
-
+SEDMPYPATH = os.getenv("SEDMPY")
 def cube_ready(caldir='./', cur_date_str=None):
     """Check for all required calibration files in calibration directory.
 
@@ -87,10 +87,10 @@ def bias_ready(caldir='./'):
 
     # Do we have all the calibration files?
     # Check biases first
-    fb = os.path.exists(os.path.join(caldir, 'bias0.1.fits'))
-    f2 = os.path.exists(os.path.join(caldir, 'bias2.0.fits'))
-    print("Biases ready?: bias0.1: %d, bias2.0: %d" % (fb, f2))
-    if fb and f2:
+    f0 = os.path.exists(os.path.join(caldir, 'bias0.fits'))
+    f1 = os.path.exists(os.path.join(caldir, 'bias1.fits'))
+    print("Biases ready?: bias0: %d, bias1: %d" % (f0, f1))
+    if f0 and f1:
         ret = True
 
     return ret
@@ -112,8 +112,8 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
 
     """
 
-    nbias = 0
-    nbias2 = 0
+    nbias0 = 0
+    nbias1 = 0
     nxe = 0
     nhg = 0
     ncd = 0
@@ -131,7 +131,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
     else:
 
         # Get files in calibration directory
-        cflist = sorted(glob.glob(os.path.join(caldir, 'ifu*.fits')))
+        cflist = sorted(glob.glob(os.path.join(caldir, 'speccal*.fits')))
         # Are there any files yet?
         if len(cflist) > 0:
             # Loop over files
@@ -139,52 +139,59 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                 # Are we complete?
                 if os.stat(cal).st_size >= fsize:
                     # Read FITS header
-                    f = pf.open(cal)
-                    hdr = f[0].header
-                    f.close()
-                    # Get OBJECT keyword
+                    caltag = cal.split('_')[1]
+                    ff = pf.open(cal)
+                    if '.fz' in cal:
+                        hdrnum = 1
+                    else:
+                        hdrnum = 0
+                    hdr = ff[hdrnum].header
+                    ff.close()
+                    # Get IMGTYPE keyword
                     try:
-                        obj = hdr['OBJECT']
+                        imtype = hdr['IMGTYPE']
                     except KeyError:
-                        obj = ''
-                    # Get ADCSPEED keyword
-                    speed = hdr['ADCSPEED']
+                        imtype = ''
+                    # Get MODE_NUM keyword
+                    try:
+                        mode = hdr['MODE_NUM']
+                    except KeyError:
+                        mode = None
 
                     # Check for calibration files
-                    if 'Calib' in obj:
-                        if 'bias' in obj:
-                            if speed == 2.0:
-                                nbias2 += 1
-                            if speed == 0.1:
-                                nbias += 1
-                        if 'Xe' in obj:
-                            nxe += 1
-                        if 'dome' in obj:
-                            ndome += 1
-                        if 'Hg' in obj:
-                            nhg += 1
-                        if 'Cd' in obj:
-                            ncd += 1
+                    if 'bias' in imtype:
+                        if mode == 0:
+                            nbias0 += 1
+                        if mode == 1:
+                            nbias1 += 1
+                    if 'illum' in imtype and caltag == 'xe':
+                        nxe += 1
+                    if 'flat' in imtype:
+                        ndome += 1
+                    if 'illum' in imtype and caltag == 'hg':
+                        nhg += 1
+                    if 'illum' in imtype and caltag == 'cd':
+                        ncd += 1
 
             # Do we have the ideal number of calibration files?
-            if (nbias2 >= 10 and nbias >= 10 and nxe >= 5 and ndome >= 5 and
-                    nhg >= 5 and ncd >= 5):
+            if ((nbias0 >= 10) and (nbias1 >= 1) and
+                    (nxe >= 5) and (ndome >= 5) and
+                    (nhg >= 5) and (ncd >= 5)):
                 ret = True
-            # Do we have the minimum allowed number of calibration files?
+                # Do we have the minimum allowed number of calibration files?
             if mintest:
-                if (nbias2 >= 5 and nbias >= 5 and nxe >= 3 and ndome >= 3 and
+                if (nbias0 >= 5 and nbias1 >= 1 and nxe >= 3 and ndome >= 3 and
                         nhg >= 3 and ncd >= 3):
                     ret = True
-        print("bias2.0: %d, bias0.1: %d, dome: %d, Xe: %d, Hg: %d, Cd: %d" %
-              (nbias2, nbias, ndome, nxe, nhg, ncd))
-        sys.stdout.flush()
-        # Should we process biases?
-        if nbias2 >= 10 and nbias >= 10 and ncp > 0:
+            print("bias0: %d, bias1: %d, dome: %d, "
+                         "Xe: %d, Hg: %d, Cd: %d" %
+                         (nbias0, nbias1, ndome, nxe, nhg, ncd))
+            sys.stdout.flush()
+            # Should we process biases?
+        if nbias0 >= 10 and nbias1 >= 5 and ncp > 0:
             proc_bias_crrs(ncp=ncp)
-
     return ret
     # END: cal_proc_ready
-
 
 def proc_bias_crrs(ncp=1, piggyback=False):
     """Process biases and CR rejection steps.
@@ -204,11 +211,13 @@ def proc_bias_crrs(ncp=1, piggyback=False):
         ret = True
     else:
         # Get new listing
-        retcode = os.system("~/spy what ifu*.fits > what.list")
+        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2_*.fits"))
+        retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
+                                  shell=True)
         if retcode == 0:
             # Generate new Makefile
             # Are we using a previous calibration set?
-            retcode2 = os.system("~/spy plan ifu*.fits")
+            retcode2 = subprocess.call(f"spy plan {' '.join(fl)}", shell=True)
             if retcode2 == 0:
                 # Make bias + bias subtraction
                 retcode3 = os.system("make -j 16 bias")
@@ -264,28 +273,32 @@ def dosci(destdir='./', datestr=None, ztfupld=False, slack=False,
     ncp = 0
     copied = []
     # Get list of source files in destination directory
-    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_ifu*.fits')))
+    srcfiles = sorted(glob.glob(os.path.join(destdir, 'crr_b_sedm2*.fits')))
     # Loop over source files
-    for f in srcfiles:
+    for fl in srcfiles:
         # get base filename
-        fn = f.split('/')[-1]
+        fn = fl.split('/')[-1]
         procfn = 'spec*auto*' + fn.split('.')[0] + '*.fits'
         proced = glob.glob(os.path.join(destdir, procfn))
         # Is our source file processed?
         if len(proced) == 0:
             # Read FITS header
-            ff = pf.open(f)
+            ff = pf.open(fl)
             hdr = ff[0].header
             ff.close()
             # Get OBJECT keyword
             obj = hdr['OBJECT'].split()[0]
             # Get DOMEST keyword
-            dome = hdr['DOMEST']
+            try:
+                dome = hdr['DOMESTAT'].strip().lower()
+            except KeyError:
+                print("Could not find DOMESTAT keyword, setting to null")
+                dome = ''
             # skip Cal files
-            if 'Calib:' in obj:
+            if 'speccal' in fl:
                 continue
             # skip if dome closed
-            if 'CLOSED' in dome or 'closed' in dome:
+            if 'closed' in dome:
                 continue
             # record action
             copied.append(fn)
@@ -304,7 +317,7 @@ def dosci(destdir='./', datestr=None, ztfupld=False, slack=False,
                 else:
                     if dbupdate:
                         # Update SedmDb cube table
-                        cube_id = drp.update_cube(f)
+                        cube_id = drp.update_cube(fl)
                         if cube_id > 0:
                             print("SEDM db accepted cube at id %d" % cube_id)
                         else:
@@ -333,7 +346,7 @@ def dosci(destdir='./', datestr=None, ztfupld=False, slack=False,
                             print("Error running report for " +
                                   fn.split('.')[0])
                         # run Verify.py
-                        cmd = "~/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         subprocess.call(cmd, shell=True)
                         # TODO: update SedmDb spec table
@@ -350,7 +363,7 @@ def dosci(destdir='./', datestr=None, ztfupld=False, slack=False,
                 else:
                     if dbupdate:
                         # Update SedmDb cube table
-                        cube_id = drp.update_cube(f)
+                        cube_id = drp.update_cube(fl)
                         if cube_id > 0:
                             print("SEDM db accepted cube at id %d" % cube_id)
                         else:
@@ -392,7 +405,7 @@ def dosci(destdir='./', datestr=None, ztfupld=False, slack=False,
                             if retcode != 0:
                                 print("Error uploading spectra to marshal")
                         # run Verify.py
-                        cmd = "~/sedmpy/drpifu/Verify.py %s --contains %s" % \
+                        cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
                         subprocess.call(cmd, shell=True)
                         # TODO: update SedmDb spec table
@@ -426,7 +439,8 @@ def red_loop(outdir=None, upld=False, slack=False, dbup=False):
     # Check if processed cal files are ready
     if not cube_ready(outdir, cur_date_str):
         # Get new listing
-        retcode = subprocess.call("~/spy what ifu*.fits > what.list",
+        fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2*.fits"))
+        retcode = subprocess.call(f"spy what {' '.join(fl)} > what.list",
                                   shell=True)
         if retcode > 0:
             print("what oops!")

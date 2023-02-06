@@ -1822,9 +1822,6 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
     # Go there
     os.chdir(outdir)
     if indir is not None:
-        # fzfiles = sorted(glob.glob("*.fits.fz"))
-        # for fzfl in fzfiles:
-        #     subprocess.call(["funpack", fzfl])
         fl = sorted(glob.glob("speccal*.fits")) + sorted(glob.glob("sedm2*.fits"))
         if len(fl) > 0:
             # Generate new Makefile
@@ -2132,8 +2129,8 @@ def clean_post_redux(outdir, utdstr):
     """Remove/compress unused files after reduction"""
     ndel = 0
     # Remove raw file links
-    flist = glob.glob(os.path.join(outdir, "*ifu%s_*.fits" % utdstr))
-    flist.extend(glob.glob(os.path.join(outdir, '*rc%s_*.fits' % utdstr)))
+    flist = glob.glob(os.path.join(outdir, "*sedm2%s_*.fits" % utdstr))
+    flist.extend(glob.glob(os.path.join(outdir, '*kped%s_*.fits' % utdstr)))
     for fl in flist:
         if os.path.islink(fl):
             os.remove(fl)
@@ -2152,10 +2149,10 @@ def clean_post_redux(outdir, utdstr):
         ff = pf.open(fl)
         hdr = ff[0].header
         ff.close()
-        try:
-            imtype = hdr['IMGTYPE']
-        except KeyError:
-            imtype = 'Test'
+        # try:
+        #     imtype = hdr['IMGTYPE']
+        # except KeyError:
+        #     imtype = 'Test'
         if 'speccal' in fl:
             os.remove(fl)
             ndel += 1
@@ -2172,7 +2169,7 @@ def clean_post_redux(outdir, utdstr):
     flist.extend(glob.glob(os.path.join(outdir, '??.fits')))
     flist.extend(glob.glob(os.path.join(outdir, 'bias*.fits')))
     # Compress rainbow cam images
-    flist.extend(glob.glob(os.path.join(outdir, 'rc*.fits')))
+    flist.extend(glob.glob(os.path.join(outdir, 'kped*.fits')))
     for fl in flist:
         if os.path.islink(fl):
             continue
