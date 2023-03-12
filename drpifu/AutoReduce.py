@@ -89,7 +89,7 @@ _reduxpath = sedm_cfg['paths']['reduxpath']
 _srcpath = sedm_cfg['paths']['srcpath']
 
 
-def cube_ready(caldir='./', cur_date_str=None, avrmslim=35.0):
+def cube_ready(caldir='./', cur_date_str=None, avrmslim=100.0):
     """Check for all required calibration files in calibration directory.
 
     Args:
