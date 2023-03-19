@@ -120,10 +120,13 @@ if __name__ == '__main__':
         rotate_image(fl)
 
     # change_filenames(args.date) for sci
-    scifiles = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/sedm2_*.fits.fz'))
+    scifiles = sorted(glob2.glob(f'{SEDMRAWPATH}/{args.date}/sedm2_*.fits*'))
     for fl in scifiles:
         print(fl)
-        subprocess.call(f"funpack -F {fl}", shell=True)
+        if ".fz" in fl:
+            subprocess.call(f"cp {fl} {SEDMRAWPATH}/{args.date}/unused/", shell=True)
+            subprocess.call(f"funpack -F {fl}", shell=True)
+            fl = fl[0:-3]
         sciexptime = float(input('Input exptime for this file: '))
-        add_header_keywords(fl[0:-3],sciexptime)
-        rotate_image(fl[0:-3])
+        add_header_keywords(fl,sciexptime)
+        rotate_image(fl)

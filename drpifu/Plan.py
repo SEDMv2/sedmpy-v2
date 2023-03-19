@@ -64,7 +64,7 @@ def identify_observations(headers):
         obj = header['OBJECT'].lstrip()
         imtype = header['IMGTYPE']
         name = header['NAME'].lstrip()
-        exptime = header['exptime']
+        exptime = header['EXPTIME']
         mode = header['MODE_NUM']
         if "test" in imtype or "Test" in imtype or "TEST" in imtype:
             continue
