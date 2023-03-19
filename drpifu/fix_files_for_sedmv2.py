@@ -74,6 +74,7 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
         fits.setval(filename, 'EXPTIME', value=sciexptime)
+        fits.setval(filename, 'OBJECT', value=hdr['QCOMMENT'].split()[0])
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     print('Added relevant keywords to ', filename)
