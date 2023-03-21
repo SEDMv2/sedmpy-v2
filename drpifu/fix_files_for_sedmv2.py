@@ -28,6 +28,8 @@ def add_header_keywords(filename):
     else:
         hdrnum = 0
     hdr = fits.open(filename)[hdrnum].header
+    if 'JD' in hdr.keys():
+        return
     date = Time(hdr['DATE'], format='isot')
     fits.setval(filename, 'DATE-OBS', value=date.isot)
     fits.setval(filename, 'JD', value=date.jd)
@@ -81,6 +83,7 @@ def add_header_keywords(filename):
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     print('Added relevant keywords to ', filename)
+    return
 
 
 def rotate_image(filename):
