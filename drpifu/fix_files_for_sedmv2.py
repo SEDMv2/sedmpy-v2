@@ -22,7 +22,7 @@ def change_filenames(date):
             subprocess.call(f'mv {fl} {SEDMRAWPATH}/{date}/{newfname}', shell=True)
 
 
-def add_header_keywords(filename,sciexptime=60):
+def add_header_keywords(filename):
     if '.fz' in filename:
         hdrnum = 1
     else:
@@ -71,9 +71,11 @@ def add_header_keywords(filename,sciexptime=60):
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     if ('object' in hdr['IMGTYPE']):
+        if 'EXPTIME' not in hdr.keys():
+            sciexptime = float(input('Input exptime for this file: '))
+            fits.setval(filename, 'EXPTIME', value=sciexptime)
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
-        fits.setval(filename, 'EXPTIME', value=sciexptime)
         fits.setval(filename, 'OBJECT', value='standard')
         fits.setval(filename, 'NAME', value=hdr['QCOMMENT'].split()[0])
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
@@ -128,6 +130,5 @@ if __name__ == '__main__':
             subprocess.call(f"cp {fl} {SEDMRAWPATH}/{args.date}/unused/", shell=True)
             subprocess.call(f"funpack -F {fl}", shell=True)
             fl = fl[0:-3]
-        sciexptime = float(input('Input exptime for this file: '))
-        add_header_keywords(fl,sciexptime)
+        add_header_keywords(fl)
         rotate_image(fl)
