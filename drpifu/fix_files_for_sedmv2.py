@@ -89,11 +89,11 @@ def add_header_keywords(filename):
             imtype = 'science'
         fits.setval(filename, 'OBJECT', value=objname)
         fits.setval(filename, 'NAME', value=objname)
-        fits.setval(filename, 'IMGTYPE', imtype)
+        fits.setval(filename, 'IMGTYPE', value=imtype)
 
         loc = Observer.at_site('Kitt Peak')
         airmass = loc.altaz(time=date, target=SkyCoord(ra=hdr['RAD'],dec=hdr['DECD'],unit=(u.deg))).secz
-        fits.setval(filename, 'AIRMASS', airmass)
+        fits.setval(filename, 'AIRMASS', value=airmass)
 
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
