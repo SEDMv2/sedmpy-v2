@@ -28,8 +28,8 @@ def add_header_keywords(filename):
     else:
         hdrnum = 0
     hdr = fits.open(filename)[hdrnum].header
-    if 'JD' in hdr.keys():
-        return
+    # if 'JD' in hdr.keys():
+    #     return
     date = Time(hdr['DATE'], format='isot')
     fits.setval(filename, 'DATE-OBS', value=date.isot)
     fits.setval(filename, 'JD', value=date.jd)
@@ -78,8 +78,14 @@ def add_header_keywords(filename):
             fits.setval(filename, 'EXPTIME', value=sciexptime)
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
-        fits.setval(filename, 'OBJECT', value='standard')
-        fits.setval(filename, 'NAME', value=hdr['QCOMMENT'].split()[0])
+        objname = hdr['QCOMMENT'].split()[0]
+        if 'STD-' in objname:
+            imtype = 'standard'
+        else:
+            imtype = 'science'
+        fits.setval(filename, 'OBJECT', value=objname)
+        fits.setval(filename, 'NAME', value=objname)
+        fits.setval(filename, 'IMGTYPE', imtype)
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     print('Added relevant keywords to ', filename)
