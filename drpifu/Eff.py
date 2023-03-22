@@ -27,9 +27,9 @@ if __name__ == "__main__":
                         help='UT date as YYYYMMDD')
     parser.add_argument('--contains', type=str, default=None,
                         help='unique observation identifier')
-    parser.add_argument('--area', type=float, default=18000.,
+    parser.add_argument('--area', type=float, default=29788.0,
                         help='telescope area in cm (def: 18,000.)')
-    parser.add_argument('--refl', type=float, default=0.82,
+    parser.add_argument('--refl', type=float, default=0.8,
                         help='total reflectance (def: 0.82)')
     args = parser.parse_args()
 
