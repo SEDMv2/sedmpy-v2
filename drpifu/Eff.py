@@ -68,7 +68,7 @@ if __name__ == "__main__":
             # Observed spectrum in e-/Angstrom
             spec = ff[0].data
             # Aperture weight
-            apwgt = ff[2].data
+            apwgt = ff[3].data
             # Original header
             ohdr = ff[0].header
             # Close spectrum
