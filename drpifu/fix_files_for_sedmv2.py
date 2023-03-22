@@ -2,6 +2,9 @@ import numpy as np
 from astropy.io import fits
 import glob2, os, subprocess, argparse
 from astropy.time import Time
+from astroplan import Observer
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 
 SEDMRAWPATH = os.getenv('SEDMRAWPATH')
 
@@ -78,6 +81,7 @@ def add_header_keywords(filename):
             fits.setval(filename, 'EXPTIME', value=sciexptime)
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
+
         objname = hdr['QCOMMENT'].split()[0]
         if 'STD-' in objname:
             imtype = 'standard'
@@ -86,6 +90,11 @@ def add_header_keywords(filename):
         fits.setval(filename, 'OBJECT', value=objname)
         fits.setval(filename, 'NAME', value=objname)
         fits.setval(filename, 'IMGTYPE', imtype)
+
+        loc = Observer.at_site('Kitt Peak')
+        airmass = loc.altaz(time=date, target=SkyCoord(ra=hdr['RAD'],dec=hdr['DECD'],unit=(u.deg))).secz
+        fits.setval(filename, 'AIRMASS', airmass)
+
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     print('Added relevant keywords to ', filename)
