@@ -28,8 +28,8 @@ def add_header_keywords(filename):
     else:
         hdrnum = 0
     hdr = fits.open(filename)[hdrnum].header
-    # if 'JD' in hdr.keys():
-    #     return
+    if 'JD' in hdr.keys():
+        return
     date = Time(hdr['DATE'], format='isot')
     fits.setval(filename, 'DATE-OBS', value=date.isot)
     fits.setval(filename, 'JD', value=date.jd)
