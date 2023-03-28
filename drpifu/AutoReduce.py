@@ -376,7 +376,7 @@ def docp(src, dest, onsky=True, verbose=False, skip_cals=False, nodb=False):
                 nobj = 1
                 logging.info('Target %s linked to %s' % (src, dest))
             ncp = 1
-            if 'REQ_ID' in hdr and 'OBJ_ID' in hdr:
+            if 'REQUSTID' in hdr and 'OBJECTID' in hdr:
                 if not nodb:
                     # Record in database
                     obs_id = update_observation(src)

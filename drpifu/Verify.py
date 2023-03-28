@@ -25,17 +25,17 @@ _rawpath = sedm_cfg['paths']['rawpath']
 _reduxpath = sedm_cfg['paths']['reduxpath']
 
 
-def time_from_fspec(filespec=None, imtype="ifu"):
+def time_from_fspec(filespec=None, imtype="sedm2_"):
     """Return time in seconds based on filename"""
     fsec = -1
     tstr = ''
     if filespec is not None:
         try:
-            tstr = filespec.split(imtype)[-1].split('_')[1:4]
+            tstr = filespec.split(imtype)[-1].split('_')[1]
         except IndexError:
             pass
-        if len(tstr) == 3:
-            fsec = int(tstr[0]) * 3600 + int(tstr[1]) * 60 + int(tstr[2])
+        if len(tstr) == 6:
+            fsec = int(tstr[0:2]) * 3600 + int(tstr[2:4]) * 60 + int(tstr[4:6])
 
     return fsec
 
@@ -81,7 +81,7 @@ def build_image_report(indir=None, fspec=None):
         header['QUALITY'] = -1
 
     # Spectrum ID
-    spec_id = filesourcename.split("ifu"+indir+"_")[-1].split("_" +
+    spec_id = filesourcename.split("sedm2_"+indir+"_")[-1].split("_" +
                                                               object_name)[0]
     # Missing plot format
     prop_missing = dict(fontsize=20, textprop=dict(color="C1"))

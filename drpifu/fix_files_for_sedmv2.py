@@ -103,7 +103,6 @@ def add_header_keywords(filename):
     print('Added relevant keywords to ', filename)
     return
 
-
 def rotate_image(filename):
     if '.fz' in filename:
         hdrnum = 1
