@@ -77,7 +77,10 @@ def add_header_keywords(filename):
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
     if ('object' in hdr['IMGTYPE']):
         if 'EXPTIME' not in hdr.keys():
-            sciexptime = float(input('Input exptime for this file: '))
+            if float(hdr['EXPOSURE']) < 1e-2:
+                sciexptime = float(input('Input exptime for this file: '))
+            else:
+                sciexptime = float(hdr['EXPOSURE'])
             fits.setval(filename, 'EXPTIME', value=sciexptime)
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
@@ -93,7 +96,7 @@ def add_header_keywords(filename):
 
         loc = Observer.at_site('Kitt Peak')
         airmass = loc.altaz(time=date, target=SkyCoord(ra=hdr['RAD'],dec=hdr['DECD'],unit=(u.deg))).secz
-        fits.setval(filename, 'AIRMASS', value=airmass)
+        fits.setval(filename, 'AIRMASS', value=airmass.value)
 
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
         fits.setval(filename, 'CRVAL2', value=88.6437849176057)
