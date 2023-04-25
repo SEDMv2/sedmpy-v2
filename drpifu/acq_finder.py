@@ -417,20 +417,20 @@ if __name__ == "__main__":
             #         continue
 
             print("Using astrometry in %s" % f)
-            try:
-                finder(f, imhdr, finderpath)
-            except ValueError:
-                print("Bad astrometry for this file: %s" % f)
-                continue
-            except AttributeError:
-                print("Error when generating the finder for file %s" % f)
-                print(sys.exc_info()[0])
-                simple_finder_astro(f, imhdr, finderpath)
-
-            except:
-                print("Error when generating the finder for file %s. "
-                      "Probably montage is broken." % f)
-                print(sys.exc_info()[0])
-                simple_finder_astro(f, imhdr, finderpath)
+            # try:
+            finder(f, imhdr, finderpath)
+            # except ValueError:
+            #     print("Bad astrometry for this file: %s" % f)
+            #     continue
+            # except AttributeError:
+            #     print("Error when generating the finder for file %s" % f)
+            #     print(sys.exc_info()[0])
+            #     simple_finder_astro(f, imhdr, finderpath)
+            #
+            # except:
+            #     print("Error when generating the finder for file %s. "
+            #           "Probably montage is broken." % f)
+            #     print(sys.exc_info()[0])
+            #     simple_finder_astro(f, imhdr, finderpath)
         else:
             print("Finder already exists: %s" % finderpath)
