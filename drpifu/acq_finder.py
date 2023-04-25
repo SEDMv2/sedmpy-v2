@@ -375,7 +375,7 @@ if __name__ == "__main__":
         finderpath = os.path.join(reduxdir, os.path.join("finders/",
                                                          finderplotf))
         # Check if it was already done
-        if not os.path.isfile(finderpath):
+        if glob.glob(finderpath)==[]:
             # # Check for existing astrometry file
             # astrof = os.path.join(rcdir, "a_%s" % f.split('/')[-1])
             # if not os.path.exists(astrof):
