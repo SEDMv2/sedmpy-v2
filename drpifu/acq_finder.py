@@ -266,7 +266,7 @@ if __name__ == "__main__":
     timestamp = imfile.split('/')[-2]
     rcdir = os.path.join(_rcpath, timestamp)
     if not os.path.isdir(rcdir):
-        rcdir = os.path.join(_altrcpath, timestamp)
+        os.mkdir(rcdir)
     reduxdir = '/'.join(imfile.split('/')[0:-1])
     imhdr = fits.open(imfile)[0].header
     objnam = imhdr['OBJECT']
@@ -300,6 +300,20 @@ if __name__ == "__main__":
 
     # We gather all point images to locate the last acquisition.
     files = sorted(glob.glob(os.path.join(rcdir, f"point*{objnam}*.new")))
+    # If no files in rcdir for the given object, download them from robo machine
+    if len(files)==0:
+        # First try downloading from /Data
+        subprocess.call(
+            f'rsync -av -e "ssh -p22222" sedm@140.252.53.120:/Data/{timestamp}/point*{objnam}*.new {rcdir}/',
+            shell=True)
+        # Check if files downloaded, if not download from /Backup/Data
+        if len(glob.glob(os.path.join(rcdir, f"point*{objnam}*.new"))) == 0:
+            subprocess.call(
+                f'rsync -av -e "ssh -p22222" sedm@140.252.53.120:/Backup/Data/{timestamp}/point*{objnam}*.new {rcdir}/',
+                shell=True)
+        # Check again, if still no files downloaded then print error
+        if len(glob.glob(os.path.join(rcdir, f"point*{objnam}*.new"))) == 0:
+            print(f'Could not find pointing files for {objnam}')
     filesacq = []
     for fl in files:
         dt,tm = os.path.basename(fl).split('_')[1:3]
