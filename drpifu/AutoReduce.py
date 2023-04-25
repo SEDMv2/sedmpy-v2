@@ -2230,6 +2230,7 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
                  (nraw, rawd, redd))
     if indate is None:
         logging.info("Latest raw directory is %s" % rawlist[-1])
+        # subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}', shell=True)
 
         if not wait:
             stat = obs_loop(rawlist, redd, check_precal=check_precal,

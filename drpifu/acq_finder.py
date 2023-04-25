@@ -5,9 +5,11 @@ Created on Tue Jul 14 15:01:50 2015
 @author: nadiablago
 """
 import subprocess
-from astropy.io import fits as pf
+from astropy.io import fits
 from astropy.wcs import WCS
 from astropy import units as u
+from astropy.time import Time, TimeDelta
+from astropy.coordinates import SkyCoord
 
 import numpy as np
 import aplpy
@@ -15,10 +17,10 @@ try:
     import coordinates_conversor
 except ImportError:
     import drprc.coordinates_conversor as coordinates_conversor
-try:
-    import fitsutils
-except ImportError:
-    import drprc.fitsutils as fitsutils
+# try:
+#     import fitsutils
+# except ImportError:
+#     import drprc.fitsutils as fitsutils
 import datetime
 import os
 import sys
@@ -44,29 +46,28 @@ _srcpath = sedm_cfg['paths']['srcpath']
 _altrcpath = sedm_cfg['paths']['rawpath']
 
 
-def finder(myfile, findername, searchrad=0.2/60.):
-
-    kra = fitsutils.get_par(myfile, "OBJRA")
-    kdec = fitsutils.get_par(myfile, "OBJDEC")
-    if not kra or not kdec:
-        kra = fitsutils.get_par(myfile, "OBRA")
-        kdec = fitsutils.get_par(myfile, "OBDEC")
-    ora, odec = coordinates_conversor.hour2deg(kra, kdec)
-    utc = fitsutils.get_par(myfile, "UTC")
-    hdulist = pf.open(myfile)[0]
+def finder(acqfile, imhdr, findername, searchrad=0.2/60.):
+    acqhdr = fits.open(acqfile)[0].header
+    kra = imhdr['RA']
+    kdec = imhdr['DEC']
+    ocoord = SkyCoord(ra=kra,dec=kdec)
+    ora = ocoord.ra.deg
+    odec = ocoord.dec.deg
+    utc = acqhdr['DATE']
+    hdulist = fits.open(acqfile)[0]
     img = hdulist.data * 1.            
     img = img.T
 
-    wcs = WCS(hdulist.header)
+    wcs = WCS(acqhdr)
 
     target_pix = wcs.wcs_world2pix([(np.array([ora, odec], np.float_))], 1)[0]
-
+    print(target_pix)
     # check bounds
     good_coords = False
     if (target_pix[0] < 0 or target_pix[0] > img.shape[0] or
        target_pix[1] < 0 or target_pix[1] > img.shape[1]):
         print("ERROR - target outside acquisition image: x,y = ", target_pix)
-        target_pix = np.array([[1280., 1293.]], dtype=np.float)
+        target_pix = np.array([[150., 150.]], dtype=np.float)
         ra, dec = wcs.wcs_pix2world(target_pix, 1)[0]
         target_pix = target_pix[0]
         findername = findername.replace(".png", "_failed.png")
@@ -99,7 +100,7 @@ def finder(myfile, findername, searchrad=0.2/60.):
     zmax = np.percentile(imgslice_target.flatten(), 98.5)
    
     print("Min: %.1f, max: %.1f" % (zmin, zmax))
-    gc = aplpy.FITSFigure(myfile, figsize=(10, 9), north=True)
+    gc = aplpy.FITSFigure(acqfile, figsize=(10, 9), north=True)
     gc.show_grayscale(vmin=zmin, vmax=zmax, smooth=1, kernel="gauss")
     gc.add_scalebar(0.1/60.)
     gc.scalebar.set_label('10 arcsec')
@@ -127,20 +128,21 @@ def finder(myfile, findername, searchrad=0.2/60.):
     gc.add_label(ras[1]+dxs[1]*1.1, decs[1]+dys[1]*1.1, 'E', relative=False,
                  color="white", horizontalalignment="center")
 
-    img_name = fitsutils.get_par(myfile, "NAME").strip()
-    img_filter = fitsutils.get_par(myfile, "FILTER")
+    img_name, img_filter = os.path.basename(finderpath).split('.')[0].split('_')[2:]
+    if img_filter=='cl':
+        img_filter = 'clear'
     gc.add_label(0.05, 0.95, 'Object: %s' % img_name, relative=True,
                  color="white", horizontalalignment="left")
-    gc.add_label(0.05, 0.9, 'Filter: SDSS %s' % img_filter, relative=True,
+    gc.add_label(0.05, 0.9, 'Filter: %s' % img_filter, relative=True,
                  color="white", horizontalalignment="left")
     gc.add_label(0.05, 0.85, 'Coordinates: RA=%s DEC=%s' %
-                 (coordinates_conversor.deg2hour(ora, odec)), relative=True,
+                 (kra, kdec), relative=True,
                  color="white", horizontalalignment="left")
     gc.add_label(0.05, 0.8, "UTC: %s" % utc, relative=True,
                  color="white", horizontalalignment="left")
     if not good_coords:
         gc.add_label(0.05, 0.75, 'Acquired coords: RA=%s DEC=%s' %
-                     (coordinates_conversor.deg2hour(ra, dec)), relative=True,
+                     (ra, dec), relative=True,
                      color="red", horizontalalignment="left")
         gc.add_label(0.05, 0.70, 'FAILED ACQUISITION', relative=True,
                      color="red", horizontalalignment="left")
@@ -149,12 +151,12 @@ def finder(myfile, findername, searchrad=0.2/60.):
     print("Created %s" % findername)
     
 
-def simple_finder(myfile, findername):
+def simple_finder(acqfile, findername):
 
-    hdulist = pf.open(myfile)[0]
+    hdulist = fits.open(acqfile)[0]
     img = hdulist.data * 1.            
     img = img.T
-    img = img[1165:2040, 1137:2040]
+    img = img[0:500, 0:500]
     newimg = img
     # ndimage.filters.gaussian_filter(img, 1, order=0, mode='constant',
     # cval=0.0, truncate=20.0)
@@ -174,17 +176,16 @@ def simple_finder(myfile, findername):
     print("Created ", findername)
 
 
-def simple_finder_astro(myfile, findername, searchrad=28./3600):  
+def simple_finder_astro(acqfile, imhdr, findername, searchrad=28./3600):
 
-    hdulist = pf.open(myfile)[0]
+    hdulist = fits.open(acqfile)[0]
     img = hdulist.data * 1.            
 
     # name = fitsutils.get_par(myfile, "NAME")
     # filter = fitsutils.get_par(myfile, "FILTER")
-
-    ra, dec = coordinates_conversor.hour2deg(fitsutils.get_par(myfile, "OBJRA"),
-                                             fitsutils.get_par(myfile,
-                                                               "OBJDEC"))
+    ocoord = SkyCoord(ra=imhdr['RA'], dec=imhdr['DEC'])
+    ra = ocoord.ra.deg
+    dec = ocoord.dec.deg
     
     wcs = WCS(hdulist.header)
 
@@ -258,30 +259,36 @@ if __name__ == "__main__":
 
     imfile = args.imfile
 
-    if imfile:
-        timestamp = imfile.split('/')[-2]
-        rcdir = os.path.join(_rcpath, timestamp)
-        if not os.path.isdir(rcdir):
-            rcdir = os.path.join(_altrcpath, timestamp)
-        reduxdir = '/'.join(imfile.split('/')[0:-1])
-        objnam = fitsutils.get_par(imfile, "OBJECT").split()[0]
-        if 'STD' in objnam:
-            objnam = objnam.split('STD-')[-1].split()[0]
-    else:
-        rcdir = args.rcdir
-        reduxdir = args.reduxdir
-        objnam = None
-        if rcdir is None:
-            timestamp = datetime.datetime.isoformat(datetime.datetime.utcnow())
-            timestamp = timestamp.split("T")[0].replace("-", "")
-            rcdir = os.path.join(_rcpath, timestamp)
-            if not os.path.isdir(rcdir):
-                rcdir = os.path.join(_altrcpath, timestamp)
-        else:
-            timestamp = os.path.basename(os.path.abspath(rcdir))
+    if imfile is None:
+        print('No imfile given, exiting')
+        sys.exit(1)
 
-        if reduxdir is None:
-            reduxdir = os.path.join(_reduxpath, timestamp)
+    timestamp = imfile.split('/')[-2]
+    rcdir = os.path.join(_rcpath, timestamp)
+    if not os.path.isdir(rcdir):
+        rcdir = os.path.join(_altrcpath, timestamp)
+    reduxdir = '/'.join(imfile.split('/')[0:-1])
+    imhdr = fits.open(imfile)[0].header
+    objnam = imhdr['OBJECT']
+    imtime = Time(imhdr['JD'],format='jd')
+        # objnam = fitsutils.get_par(imfile, "OBJECT").split()[0]
+        # if 'STD' in objnam:
+        #     objnam = objnam.split('STD-')[-1].split()[0]
+    # else:
+    #     rcdir = args.rcdir
+    #     reduxdir = args.reduxdir
+    #     objnam = None
+    #     if rcdir is None:
+    #         timestamp = datetime.datetime.isoformat(datetime.datetime.utcnow())
+    #         timestamp = timestamp.split("T")[0].replace("-", "")
+    #         rcdir = os.path.join(_rcpath, timestamp)
+    #         if not os.path.isdir(rcdir):
+    #             rcdir = os.path.join(_altrcpath, timestamp)
+    #     else:
+    #         timestamp = os.path.basename(os.path.abspath(rcdir))
+    #
+    #     if reduxdir is None:
+    #         reduxdir = os.path.join(_reduxpath, timestamp)
 
     os.chdir(reduxdir)
     print("Making finder for object: %s" % objnam)
@@ -291,37 +298,41 @@ if __name__ == "__main__":
     if not (os.path.isdir("finders")):
         os.makedirs("finders")
 
-    # We gather all RC images to locate the Acquisition ones.
-    files = glob.glob(os.path.join(rcdir, "rc*[0-9].fit*"))
-    files.sort()
+    # We gather all point images to locate the last acquisition.
+    files = sorted(glob.glob(os.path.join(rcdir, f"point*{objnam}*.new")))
     filesacq = []
+    for fl in files:
+        dt,tm = os.path.basename(fl).split('_')[1:3]
+        filetime = Time(f'{dt[0:4]}-{dt[4:6]}-{dt[6:8]}T{tm[0:2]}:{tm[2:4]}:{tm[4:]}',format='isot')
+        if filetime - imfile < TimeDelta(180,format='sec'):
+            filesacq.append(fl)
 
-    for f in files:
-        try:
-            ff = pf.open(f)
-        except OSError:
-            print("WARNING - corrupt fits file: %s" % f)
-            continue
-        if "IMGTYPE" in ff[0].header:
-            imgtype = ff[0].header["IMGTYPE"]
-        else:
-            imgtype = ''
-        if "OBJECT" in ff[0].header:
-            obj = ff[0].header["OBJECT"]
-        else:
-            obj = ''
-        if (imgtype.upper() == "ACQUISITION" or "ACQ" in imgtype.upper() or
-           "ACQ" in obj) and ("TEST" not in imgtype.upper()):
-            if objnam:
-                if objnam in obj:
-                    filesacq.append(f)
-            else:
-                filesacq.append(f)
-        else:
-            if 'OBJECT' in ff[0].header:
-                if 'finding' in ff[0].header['OBJECT'] and \
-                        objnam in ff[0].header['OBJECT']:
-                    filesacq.append(f)
+    # for f in files:
+    #     try:
+    #         ff = pf.open(f)
+    #     except OSError:
+    #         print("WARNING - corrupt fits file: %s" % f)
+    #         continue
+    #     if "IMGTYPE" in ff[0].header:
+    #         imgtype = ff[0].header["IMGTYPE"]
+    #     else:
+    #         imgtype = ''
+    #     if "OBJECT" in ff[0].header:
+    #         obj = ff[0].header["OBJECT"]
+    #     else:
+    #         obj = ''
+    #     if (imgtype.upper() == "ACQUISITION" or "ACQ" in imgtype.upper() or
+    #        "ACQ" in obj) and ("TEST" not in imgtype.upper()):
+    #         if objnam:
+    #             if objnam in obj:
+    #                 filesacq.append(f)
+    #         else:
+    #             filesacq.append(f)
+    #     else:
+    #         if 'OBJECT' in ff[0].header:
+    #             if 'finding' in ff[0].header['OBJECT'] and \
+    #                     objnam in ff[0].header['OBJECT']:
+    #                 filesacq.append(f)
 
     n_acq = len(filesacq)
     print("Found %d files for finders:\n%s" % (n_acq, filesacq))
@@ -330,81 +341,82 @@ if __name__ == "__main__":
     for f in filesacq:
         n_find += 1
         print("Trying finder %d of %d: %s" % (n_find, n_acq, f))
-        try:
-            objnam = fitsutils.get_par(f, "OBJECT")
-        except:
-            print('There is no object in this file %s. Skipping'
-                  ' and moving to the next file.' % f)
-            continue
+        # try:
+        #     objnam = fitsutils.get_par(f, "OBJECT")
+        # except:
+        #     print('There is no object in this file %s. Skipping'
+        #           ' and moving to the next file.' % f)
+        #     continue
 
         # We generate only one finder for each object.
         name = f.split('/')[-1].split(".")[0]
-        if 'finding' in objnam:
-            filt = objnam.split()[1].split('[')[-1].split(']')[0]
-            objnam = objnam.split()[0].split('STD-')[-1]
-        else:
-            objnam = objnam.split()[0]
-            filt = fitsutils.get_par(f, "FILTER")
+        # if 'finding' in objnam:
+        #     filt = objnam.split()[1].split('[')[-1].split(']')[0]
+        #     objnam = objnam.split()[0].split('STD-')[-1]
+        # else:
+        #     objnam = objnam.split()[0]
+        #     filt = fitsutils.get_par(f, "FILTER")
+        filt = 'cl'
         finderplotf = 'finder_%s_%s_%s.png' % (name, objnam, filt)
         finderpath = os.path.join(reduxdir, os.path.join("finders/",
                                                          finderplotf))
         # Check if it was already done
         if not os.path.isfile(finderpath):
-            # Check for existing astrometry file
-            astrof = os.path.join(rcdir, "a_%s" % f.split('/')[-1])
-            if not os.path.exists(astrof):
-                # link rc image into reduxdir
-                dest = os.path.join(reduxdir, f.split('/')[-1])
-                if os.path.isfile(dest):
-                    print("RC ACQ image already exists: %s" % dest)
-                else:
-                    os.symlink(f, dest)
+            # # Check for existing astrometry file
+            # astrof = os.path.join(rcdir, "a_%s" % f.split('/')[-1])
+            # if not os.path.exists(astrof):
+            #     # link rc image into reduxdir
+            #     dest = os.path.join(reduxdir, f.split('/')[-1])
+            #     if os.path.isfile(dest):
+            #         print("RC ACQ image already exists: %s" % dest)
+            #     else:
+            #         os.symlink(f, dest)
+            #
+            #     print("Solving astrometry", dest)
+            #     # Solving for astrometry
+            #     astrof = dest.replace(".fits", "_astrom.fits").replace(".gz",
+            #                                                            "")
+            #     if not os.path.exists(astrof):
+            #         returncode = subprocess.call([_srcpath+'bin/do_astrom',
+            #                                       dest])
+            #         if returncode != 0:
+            #             print("Astrometry failed, perform median subtraction")
+            #             returncode = subprocess.call(
+            #                 [_srcpath+'bin/spy',
+            #                  _srcpath+'drpifu/med_sub.py', '-i',
+            #                  f.split('/')[-1]])
+            #             if returncode != 0:
+            #                 print("Astrometry failed for %s, "
+            #                       "skipping finder %s" % (dest, finderpath))
+            #                 continue
+            #             returncode = subprocess.call(
+            #                 [_srcpath+'bin/do_astrom', dest])
+            #         if returncode != 0:
+            #             print("Astrometry failed for %s, skipping finder %s" %
+            #                   (dest, finderpath))
+            #             continue
+            #     else:
+            #         print("Astrometry file already exists: %s" % astrof)
+            #     # Check results
+            #     if not os.path.isfile(astrof):
+            #         print("Astrometry results not found %s" % astrof)
+            #         continue
 
-                print("Solving astrometry", dest)
-                # Solving for astrometry
-                astrof = dest.replace(".fits", "_astrom.fits").replace(".gz",
-                                                                       "")
-                if not os.path.exists(astrof):
-                    returncode = subprocess.call([_srcpath+'bin/do_astrom',
-                                                  dest])
-                    if returncode != 0:
-                        print("Astrometry failed, perform median subtraction")
-                        returncode = subprocess.call(
-                            [_srcpath+'bin/spy',
-                             _srcpath+'drpifu/med_sub.py', '-i',
-                             f.split('/')[-1]])
-                        if returncode != 0:
-                            print("Astrometry failed for %s, "
-                                  "skipping finder %s" % (dest, finderpath))
-                            continue
-                        returncode = subprocess.call(
-                            [_srcpath+'bin/do_astrom', dest])
-                    if returncode != 0:
-                        print("Astrometry failed for %s, skipping finder %s" %
-                              (dest, finderpath))
-                        continue
-                else:
-                    print("Astrometry file already exists: %s" % astrof)
-                # Check results
-                if not os.path.isfile(astrof):
-                    print("Astrometry results not found %s" % astrof)
-                    continue
-
-            print("Using astrometry in %s" % astrof)
+            print("Using astrometry in %s" % f)
             try:
-                finder(astrof, finderpath)
+                finder(f, imhdr, finderpath)
             except ValueError:
-                print("Bad astrometry for this file: %s" % astrof)
+                print("Bad astrometry for this file: %s" % f)
                 continue
             except AttributeError:
                 print("Error when generating the finder for file %s" % f)
                 print(sys.exc_info()[0])
-                simple_finder_astro(astrof, finderpath)
+                simple_finder_astro(f, imhdr, finderpath)
 
             except:
                 print("Error when generating the finder for file %s. "
-                      "Probably montage is broken." % astrof)
+                      "Probably montage is broken." % f)
                 print(sys.exc_info()[0])
-                simple_finder_astro(astrof, finderpath)
+                simple_finder_astro(f, imhdr, finderpath)
         else:
             print("Finder already exists: %s" % finderpath)
