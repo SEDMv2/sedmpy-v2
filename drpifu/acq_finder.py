@@ -318,7 +318,7 @@ if __name__ == "__main__":
     for fl in files:
         dt,tm = os.path.basename(fl).split('_')[1:3]
         filetime = Time(f'{dt[0:4]}-{dt[4:6]}-{dt[6:8]}T{tm[0:2]}:{tm[2:4]}:{tm[4:]}',format='isot')
-        if filetime - imfile < TimeDelta(180,format='sec'):
+        if filetime - imtime < TimeDelta(180,format='sec'):
             filesacq.append(fl)
 
     # for f in files:
