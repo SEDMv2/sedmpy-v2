@@ -128,7 +128,7 @@ def finder(acqfile, imhdr, findername, searchrad=0.2/60.):
     gc.add_label(ras[1]+dxs[1]*1.1, decs[1]+dys[1]*1.1, 'E', relative=False,
                  color="white", horizontalalignment="center")
 
-    img_name, img_filter = os.path.basename(finderpath).split('.')[0].split('_')[2:]
+    img_name, img_filter = os.path.basename(finderpath).split('.')[0].split('_')[-2:]
     if img_filter=='cl':
         img_filter = 'clear'
     gc.add_label(0.05, 0.95, 'Object: %s' % img_name, relative=True,
