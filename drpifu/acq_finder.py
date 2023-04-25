@@ -50,7 +50,7 @@ def finder(acqfile, imhdr, findername, searchrad=0.2/60.):
     acqhdr = fits.open(acqfile)[0].header
     kra = imhdr['RA']
     kdec = imhdr['DEC']
-    ocoord = SkyCoord(ra=kra,dec=kdec)
+    ocoord = SkyCoord(ra=kra,dec=kdec,unit=(u.hourangle,u.deg))
     ora = ocoord.ra.deg
     odec = ocoord.dec.deg
     utc = acqhdr['DATE']
@@ -183,7 +183,7 @@ def simple_finder_astro(acqfile, imhdr, findername, searchrad=28./3600):
 
     # name = fitsutils.get_par(myfile, "NAME")
     # filter = fitsutils.get_par(myfile, "FILTER")
-    ocoord = SkyCoord(ra=imhdr['RA'], dec=imhdr['DEC'])
+    ocoord = SkyCoord(ra=imhdr['RA'], dec=imhdr['DEC'], unit=(u.hourangle,u.deg))
     ra = ocoord.ra.deg
     dec = ocoord.dec.deg
     
