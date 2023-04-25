@@ -59,6 +59,7 @@ def finder(acqfile, imhdr, findername, searchrad=0.2/60.):
     img = img.T
 
     wcs = WCS(acqhdr)
+    print(wcs)
 
     target_pix = wcs.wcs_world2pix([(np.array([ora, odec], np.float_))], 1)[0]
     print(target_pix)
@@ -141,8 +142,9 @@ def finder(acqfile, imhdr, findername, searchrad=0.2/60.):
     gc.add_label(0.05, 0.8, "UTC: %s" % utc, relative=True,
                  color="white", horizontalalignment="left")
     if not good_coords:
+        c = SkyCoord(ra=ra,dec=dec,unit=(u.deg)).to_string('hmsdms').split()
         gc.add_label(0.05, 0.75, 'Acquired coords: RA=%s DEC=%s' %
-                     (ra, dec), relative=True,
+                     (c[0], c[1]), relative=True,
                      color="red", horizontalalignment="left")
         gc.add_label(0.05, 0.70, 'FAILED ACQUISITION', relative=True,
                      color="red", horizontalalignment="left")
@@ -375,7 +377,7 @@ if __name__ == "__main__":
         finderpath = os.path.join(reduxdir, os.path.join("finders/",
                                                          finderplotf))
         # Check if it was already done
-        if glob.glob(finderpath)==[]:
+        if not os.path.isfile(finderpath):
             # # Check for existing astrometry file
             # astrof = os.path.join(rcdir, "a_%s" % f.split('/')[-1])
             # if not os.path.exists(astrof):
