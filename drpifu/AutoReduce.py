@@ -182,7 +182,7 @@ def bias_ready(caldir='./'):
     f0 = os.path.exists(os.path.join(caldir, 'bias0.fits'))
     f1 = os.path.exists(os.path.join(caldir, 'bias1.fits'))
     logging.info("Biases ready?: bias0: %d, bias1: %d" % (f0, f1))
-    if f0 and f1:
+    if f0:# and f1:
         ret = True
 
     return ret
@@ -291,13 +291,13 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                             cd_done = True
 
             # Do we have the ideal number of calibration files?
-            if ((nbias0 >= 10 or bias0_done) and (nbias1 >= 1 or bias1_done) and
+            if ((nbias0 >= 10 or bias0_done) and #(nbias1 >= 1 or bias1_done) and
                     (nxe >= 5 or xe_done) and (ndome >= 5 or dome_done) and
                     (nhg >= 5 or hg_done) and (ncd >= 5 or cd_done)):
                 ret = True
             # Do we have the minimum allowed number of calibration files?
             if mintest:
-                if (nbias0 >= 5 and nbias1 >= 1 and nxe >= 3 and ndome >= 3 and
+                if (nbias0 >= 5 and nbias1 >= 0 and nxe >= 3 and ndome >= 3 and
                         nhg >= 3 and ncd >= 3):
                     ret = True
         logging.info("bias0: %d, bias1: %d, dome: %d, "
@@ -305,7 +305,7 @@ def cal_proc_ready(caldir='./', fsize=8400960, mintest=False, ncp=0,
                      (nbias0, nbias1, ndome, nxe, nhg, ncd))
         sys.stdout.flush()
         # Should we process biases?
-        if nbias0 >= 10 and nbias1 >= 5 and ncp > 0:
+        if nbias0 >= 10 and nbias1 >= 0 and ncp > 0:
             proc_bias_crrs(ncp=ncp)
     return ret
     # END: cal_proc_ready
@@ -2005,8 +2005,7 @@ def obs_loop(rawlist=None, redd=None, check_precal=True, indir=None,
                 ncb = True
                 nc2 = True
             # Check for failure
-            if not nct or not nctm or not ncg or not ncw or not ncf or not ncb \
-                    or not nc2:
+            if not nct or not nctm or not ncg or not ncw or not ncf or not nc2:
                 msg = "Calibration stage failed: trace = %s, trace/mask = %s" \
                       "grid = %s, wave = %s, flat = %s, " \
                       "bias0.1 = %s, bias2.0 = %s, " \
