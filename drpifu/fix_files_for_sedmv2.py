@@ -33,10 +33,11 @@ def add_header_keywords(filename):
     hdr = fits.open(filename)[hdrnum].header
     # if 'JD' in hdr.keys():
     #     return
-    date = Time(hdr['DATE'], format='isot')
-    fits.setval(filename, 'DATE-OBS', value=date.isot)
-    fits.setval(filename, 'JD', value=date.jd)
-    fits.setval(filename, 'MJD_OBS', value=date.mjd)
+    date,hms = hdr['DATE-OBS'].split('_')
+    isodate = Time(f"{date[:4]}-{date[4:6]}-{date[6:]}T{hms[0:2]}:{hms[2:4]}:{hms[4:]}", format="isot")
+    fits.setval(filename, 'DATE-OBS', value=isodate.isot)
+    fits.setval(filename, 'JD', value=isodate.jd)
+    fits.setval(filename, 'MJD_OBS', value=isodate.mjd)
     if 'bias' in hdr['IMGTYPE']:
         fits.setval(filename, 'EXPTIME', value=0)
         fits.setval(filename, 'DOMESTAT', value='closed')
@@ -95,7 +96,7 @@ def add_header_keywords(filename):
         fits.setval(filename, 'IMGTYPE', value=imtype)
 
         loc = Observer.at_site('Kitt Peak')
-        airmass = loc.altaz(time=date, target=SkyCoord(ra=hdr['RAD'],dec=hdr['DECD'],unit=(u.deg))).secz
+        airmass = loc.altaz(time=isodate, target=SkyCoord(ra=hdr['RAD'],dec=hdr['DECD'],unit=(u.deg))).secz
         fits.setval(filename, 'AIRMASS', value=airmass.value)
 
         fits.setval(filename, 'CRVAL1', value=155.4749009102372)
