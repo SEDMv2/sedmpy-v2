@@ -39,6 +39,8 @@ def add_header_keywords(filename):
         fits.setval(filename, 'DATE-OBS', value=isodate.isot)
         fits.setval(filename, 'JD', value=isodate.jd)
         fits.setval(filename, 'MJD_OBS', value=isodate.mjd)
+    else:
+        isodate = Time(hdr['DATE-OBS'], format='isot')
     if 'bias' in hdr['IMGTYPE']:
         fits.setval(filename, 'EXPTIME', value=0)
         fits.setval(filename, 'DOMESTAT', value='closed')
