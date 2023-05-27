@@ -86,7 +86,9 @@ def add_header_keywords(filename):
         fits.setval(filename, 'DOMESTAT', value='open')
         fits.setval(filename, 'LAMPCUR', value=0.0)
 
-        objname = hdr['QCOMMENT'].split()[0]
+        objname = hdr['OBJECTID']
+        if objname == 0:
+            objname = filename.split('.')[0].split('_')[3]
         if 'STD-' in objname:
             imtype = 'standard'
         else:
