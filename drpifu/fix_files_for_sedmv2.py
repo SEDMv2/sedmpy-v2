@@ -33,11 +33,12 @@ def add_header_keywords(filename):
     hdr = fits.open(filename)[hdrnum].header
     # if 'JD' in hdr.keys():
     #     return
-    date,hms = hdr['DATE-OBS'].split('_')
-    isodate = Time(f"{date[:4]}-{date[4:6]}-{date[6:]}T{hms[0:2]}:{hms[2:4]}:{hms[4:]}", format="isot")
-    fits.setval(filename, 'DATE-OBS', value=isodate.isot)
-    fits.setval(filename, 'JD', value=isodate.jd)
-    fits.setval(filename, 'MJD_OBS', value=isodate.mjd)
+    if 'T' not in hdr['DATE-OBS']:
+        date,hms = hdr['DATE-OBS'].split('_')
+        isodate = Time(f"{date[:4]}-{date[4:6]}-{date[6:]}T{hms[0:2]}:{hms[2:4]}:{hms[4:]}", format="isot")
+        fits.setval(filename, 'DATE-OBS', value=isodate.isot)
+        fits.setval(filename, 'JD', value=isodate.jd)
+        fits.setval(filename, 'MJD_OBS', value=isodate.mjd)
     if 'bias' in hdr['IMGTYPE']:
         fits.setval(filename, 'EXPTIME', value=0)
         fits.setval(filename, 'DOMESTAT', value='closed')
