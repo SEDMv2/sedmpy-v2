@@ -226,10 +226,10 @@ bs_crr_b_%.gz : crr_b_%
 
 .PHONY: report finalreport
 
-bias: bias0.fits bias1.fits $(BIAS)
+bias: bias0.fits $(BIAS)
 crrs: $(CRRS)
 
-$(BIAS): bias0.fits bias1.fits
+$(BIAS): bias0.fits
 	$(BSUB) $(subst b_,,$@)
 
 $(CRRS): 
