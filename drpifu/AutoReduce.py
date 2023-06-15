@@ -938,12 +938,12 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                             if retcode != 0:
                                 logging.error("Error uploading spectra to"
                                               " fritz marshal")
-                            # growth upload
-                            cmd = ("make", "ztfupload")
-                            retcode = subprocess.call(cmd)
-                            if retcode != 0:
-                                logging.error("Error uploading spectra to"
-                                              " growth marshal")
+                            # # growth upload
+                            # cmd = ("make", "ztfupload")
+                            # retcode = subprocess.call(cmd)
+                            # if retcode != 0:
+                            #     logging.error("Error uploading spectra to"
+                            #                   " growth marshal")
                         # run Verify.py
                         cmd = f"{SEDMPYPATH}/drpifu/Verify.py %s --contains %s" % \
                               (datestr, fn.split('.')[0])
@@ -2229,9 +2229,9 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
                  (nraw, rawd, redd))
     if indate is None:
         logging.info("Latest raw directory is %s" % rawlist[-1])
-        # subprocess.call(f'spy fix_files_for_sedmv2.py --date {indate}', shell=True)
 
         if not wait:
+            subprocess.call(f'spy fix_files_for_sedmv2.py --date {os.path.basename(rawlist[-1])}', shell=True)
             stat = obs_loop(rawlist, redd, check_precal=check_precal,
                             piggyback=piggyback, local=local, nodb=nodb,
                             nopush_marshal=nopush_marshal,
@@ -2269,6 +2269,7 @@ def go(rawd=_rawpath, redd=_reduxpath, wait=False,
                 logging.info("Found %d raw directories in %s: "
                              "putting reduced data in %s" % (nraw, rawd, redd))
                 logging.info("Latest raw directory is %s" % rawlist[-1])
+                subprocess.call(f'spy fix_files_for_sedmv2.py --date {os.path.basename(rawlist[-1])}', shell=True)
                 stat = obs_loop(rawlist, redd, check_precal=check_precal,
                                 piggyback=piggyback, local=local, nodb=nodb,
                                 nopush_marshal=nopush_marshal,

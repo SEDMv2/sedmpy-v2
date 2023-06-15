@@ -31,9 +31,9 @@ fritz_phot_url = fritz_base_url + 'api/photometry'
 fritz_view_source_url = fritz_base_url + 'source'
 fritz_alloc_url = fritz_base_url + 'api/allocation'
 
-default_id = 37
-instrument_id = 2
-telescope_id = 37
+default_id = 1074
+instrument_id = 1078
+telescope_id = 1074
 
 
 def write_json_file(pydict, output_file):
@@ -79,12 +79,12 @@ def get_keywords_from_file(inputfile, keywords, sep=':'):
             if k.upper() == 'EXPTIME':
                 outstr = out.split(sep, 1)[-1]
                 return_dict[k] = float(outstr)
-            elif v.upper() == 'OBSDATE':
+            elif v.upper() == 'DATE-OBS':
                 date_str = out.split(sep, 1)[-1].split()[-1]
-                out = subprocess.check_output('grep OBSTIME %s' % inputfile,
-                                              shell=True,
-                                              universal_newlines=True)
-                date_str += "T" + out.split(sep, 1)[-1].split()[-1]
+                # out = subprocess.check_output('grep OBSTIME %s' % inputfile,
+                #                               shell=True,
+                #                               universal_newlines=True)
+                # date_str += "T" + out.split(sep, 1)[-1].split()[-1]
                 date_str = date_str.split('.')[0] + "Z"
                 return_dict[k] = date_str
             else:
@@ -149,7 +149,7 @@ def upload_phot(phot_file, inst_id=65, request_id='', testing=False):
         return ret
 
 
-def upload_spectra(spec_file, request_id=None, sourceid=None, inst_id=2,
+def upload_spectra(spec_file, request_id=None, sourceid=None, inst_id=1078,
                    check_quality=True, min_quality=2, testing=False,
                    group_id=None):
     """
@@ -175,10 +175,10 @@ def upload_spectra(spec_file, request_id=None, sourceid=None, inst_id=2,
 
     # Create the mandatory keyword dictionary payload
     keywords_dict = {   # 'reduced_by': 'REDUCER',
-                     'observed_at': 'OBSDATE',
+                     'observed_at': 'DATE-OBS',
                      'quality': 'QUALITY'}
-    if '_SEDM' in spec_file:
-        keywords_dict.update({'observed_at': 'OBSUTC'})
+    # if '_SEDM' in spec_file:
+    #     keywords_dict.update({'observed_at': 'OBSUTC'})
 
     submission_dict = get_keywords_from_file(spec_file, keywords_dict)
 
@@ -434,24 +434,25 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
             continue
 
         # Extract request ID
-        req_id = subprocess.check_output(('grep', 'REQ_ID', fi),
+        req_id = subprocess.check_output(('grep', 'REQUSTID', fi),
                                          universal_newlines=True)
         req_id = req_id.split(':', 1)[-1].strip()
         if not req_id:
             print("No REQ_ID found: %s" % fi)
             continue
         # Extract object name
-        tname = fi.split('_ifu')[-1].split('_')[4:]
+        tname = fi.split('_sedm2_')[-1].split('_')[2]
         if len(tname) > 1:
             objname = '_'.join(tname).split('.txt')[0]
         else:
             objname = tname[0].split('.txt')[0]
         # Extract observation id
         fname = os.path.basename(fi)
-        if 'ifu' in fname:
-            obs_id = ":".join(fname.split('_ifu')[-1].split('_')[1:4])
-        elif 'rc' in fname:
-            obs_id = ":".join(fname.split('_rc')[-1].split('_')[1:4])
+        if 'sedm2' in fname:
+            obs_id = fname.split('_sedm2_')[-1].split('_')[1]
+            obs_id = f'{obs_id[0:2]}:{obs_id[2:4]}:{obs_id[4:6]}'
+        # elif 'rc' in fname:
+        #     obs_id = ":".join(fname.split('_rc')[-1].split('_')[1:4])
         else:
             obs_id = "..:..:.."
         # Are we uploading only one file?
@@ -462,7 +463,7 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
         # Upload
         r, spec, stat, spec_id, tns = update_target_by_request_id(
             req_id, add_status=True, status='Completed', add_spectra=True,
-            spectra_file=fi, search_db=dbase, reducedby=reducedby,
+            spectra_file=fi, search_db=None, reducedby=reducedby,
             testing=testing)
         # Mark as uploaded
         if stat:
@@ -537,8 +538,8 @@ Uploads results to the fritz marshal.
         print("Dir not found: %s" % srcdir)
     else:
         print("Uploading from %s" % srcdir)
-        # Use the database
-        import db.SedmDb
-        sedmdb = db.SedmDb.SedmDB()
-        parse_ztf_by_dir(srcdir, upfil=args.data_file, dbase=sedmdb,
+        # Use the database not
+        # import db.SedmDb
+        # sedmdb = db.SedmDb.SedmDB()
+        parse_ztf_by_dir(srcdir, upfil=args.data_file, dbase=None,
                          reducedby=args.reducedby, testing=args.testing)

@@ -100,7 +100,7 @@ def add_spec_autoannot(obj_id, andic, spec_id=None, origin=None, testing=False):
 
 
 def add_SNIascore_pysedm_autoannot(fname, object_id=None, spec_id=None,
-                                   testing=False, upload_tns=True):
+                                   testing=False, upload_tns=False):
     """
     adds autoannotations with SNIASCORE and error
     if SNIASCORE > 0.9, also adds SNIASCORE redshift and error
