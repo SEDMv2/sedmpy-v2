@@ -420,6 +420,10 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
             if "contsep" in fi:
                 print("Not uploading contsep extraction yet: %s" % fi)
                 continue
+            # skip non science spectra
+            if "STD-" in fi:
+                print("Not uploading standard star: %s" % fi)
+                continue
             # add all others
             files.append(fi)
 
@@ -446,10 +450,10 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
             continue
         # Extract object name
         tname = fi.split('_sedm2_')[-1].split('_')[2]
-        if len(tname) > 1:
-            objname = '_'.join(tname).split('.txt')[0]
-        else:
-            objname = tname.split('.txt')[0]
+        # if len(tname) > 1:
+        #     objname = '_'.join(tname).split('.txt')[0]
+        # else:
+        objname = tname.split('.txt')[0]
         print(req_id, objname)
         # Extract observation id
         fname = os.path.basename(fi)
