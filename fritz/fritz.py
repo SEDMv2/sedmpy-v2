@@ -228,7 +228,7 @@ def read_request(request_file):
     return json.load(open(request_file, 'r'))
 
 
-def update_target_by_request_id(request_id, add_spectra=False, spectra_file='',
+def update_target_by_request_id(request_id, objname, add_spectra=False, spectra_file='',
                                 add_status=False, status='Completed',
                                 search_db=None, reducedby=None, testing=False):
     """
@@ -287,9 +287,9 @@ def update_target_by_request_id(request_id, add_spectra=False, spectra_file='',
                 print("Fritz trigger")
         # set group id
         if share_id == 2:
-            group_id = 209
+            group_id = 1423 #sedmv2 team group id hardcoded
         else:
-            group_id = 209
+            group_id = 1423
         # get source name
         try:
             res = search_db.get_from_object(["name"], {"id": object_id})[0]
@@ -307,7 +307,10 @@ def update_target_by_request_id(request_id, add_spectra=False, spectra_file='',
         username = res[0]
         email = res[1]
     else:
-        print("no dbase given!")
+        print("no dbase given! Querying fritz for required values")
+        marshal_id = request_id
+        object_name = objname
+        group_id = 1423
 
     # Did we get a marshal ID?
     if marshal_id is None:
@@ -437,6 +440,7 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
         req_id = subprocess.check_output(('grep', 'REQUSTID', fi),
                                          universal_newlines=True)
         req_id = req_id.split(':', 1)[-1].strip()
+
         if not req_id:
             print("No REQ_ID found: %s" % fi)
             continue
@@ -445,7 +449,8 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
         if len(tname) > 1:
             objname = '_'.join(tname).split('.txt')[0]
         else:
-            objname = tname[0].split('.txt')[0]
+            objname = tname.split('.txt')[0]
+        print(req_id, objname)
         # Extract observation id
         fname = os.path.basename(fi)
         if 'sedm2' in fname:
@@ -462,7 +467,7 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
                 continue
         # Upload
         r, spec, stat, spec_id, tns = update_target_by_request_id(
-            req_id, add_status=True, status='Completed', add_spectra=True,
+            req_id, objname, add_status=True, status='Completed', add_spectra=True,
             spectra_file=fi, search_db=None, reducedby=reducedby,
             testing=testing)
         # Mark as uploaded
