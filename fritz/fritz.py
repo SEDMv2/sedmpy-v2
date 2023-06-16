@@ -443,7 +443,7 @@ def parse_ztf_by_dir(target_dir, upfil=None, dbase=None, reducedby=None,
         # Extract request ID
         req_id = subprocess.check_output(('grep', 'REQUSTID', fi),
                                          universal_newlines=True)
-        req_id = req_id.split(':', 1)[-1].strip()
+        req_id = int(req_id.split(':', 1)[-1].strip())
 
         if not req_id:
             print("No REQ_ID found: %s" % fi)
