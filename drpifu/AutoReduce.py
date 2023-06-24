@@ -408,22 +408,18 @@ def update_observation(input_fitsfile):
         by adding a new observation"""
 
     header_dict = {
-        'object_id': 'OBJ_ID', 'request_id': 'REQ_ID', 'mjd': 'MJD_OBS',
-        'airmass': 'AIRMASS', 'airmass_end': 'ENDAIR', 'exptime': 'EXPTIME',
-        'lst': 'LST', 'ra': 'RA', 'dec': 'DEC', 'tel_az': 'TEL_AZ',
-        'tel_el': 'TEL_EL', 'tel_pa': 'TEL_PA', 'ra_off': 'RA_OFF',
-        'dec_off': 'DEC_OFF', 'imtype': 'IMGTYPE', 'camera': 'CAM_NAME',
-        'filter': 'FILTER', 'parang': 'TEL_PA', 'parang_end': 'END_PA',
-        'time_elapsed': 'ELAPTIME'
+        'object_id': 'OBJECTID', 'request_id': 'REQUSTID', 'mjd': 'MJD_OBS',
+        'airmass': 'AIRMASS', 'exptime': 'EXPTIME',
+        'lst': 'OBLST', 'ra': 'RA', 'dec': 'DEC', 'tel_az': 'AZIMUTH',
+        'tel_el': 'ELVATION', 'imtype': 'IMGTYPE', 'camera': 'CCDNAME',
+        'filter': 'FILTER'
     }
     obs_dict = {
         'object_id': 0, 'request_id': 0, 'mjd': 0.,
-        'airmass': 0., 'airmass_end': 0., 'exptime': 0.,
+        'airmass': 0., 'exptime': 0.,
         'lst': ' ', 'ra': 0., 'dec': 0., 'tel_az': 0.,
-        'tel_el': 0., 'tel_pa': 0., 'ra_off': 0.,
-        'dec_off': 0., 'imtype': ' ', 'camera': ' ',
-        'filter': ' ', 'parang': 0., 'parang_end': 0.,
-        'time_elapsed': 0.,
+        'tel_el': 0., 'imtype': ' ', 'camera': ' ',
+        'filter': ' ',
         'fitsfile': input_fitsfile.split('/')[-1]
     }
     ff = pf.open(input_fitsfile)
