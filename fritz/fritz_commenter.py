@@ -373,16 +373,18 @@ def add_SNID_pysedm_autoannot(fname, object_id=None, spec_id=None,
 
     if pr_posted:
         return True  # we already have an attachment comment so don't overwrite
-
-    # SNID PLOT
-    # NOTE: this makes a major assumption about the naming scheme of snid plots
-    image_filename = fname.replace('.txt',
-                                   '_{}.png'.format(header['snidmatchtype']))
-    if not glob(image_filename):
+    else:
         return False
-    ret = add_spec_attachment(object_id, 'AUTO_SNID_plot', image_filename,
-                              spec_id=spec_id, testing=testing)
-    return ret
+
+    # # SNID PLOT
+    # # NOTE: this makes a major assumption about the naming scheme of snid plots
+    # image_filename = fname.replace('.txt',
+    #                                '_{}.png'.format(header['snidmatchtype']))
+    # if not glob(image_filename):
+    #     return False
+    # ret = add_spec_attachment(object_id, 'AUTO_SNID_plot', image_filename,
+    #                           spec_id=spec_id, testing=testing)
+    # return ret
 
 
 if __name__ == "__main__":

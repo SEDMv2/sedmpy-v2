@@ -32,12 +32,12 @@ class TimeoutHTTPAdapter(HTTPAdapter):
 session = requests.Session()
 session_headers = {'Authorization': 'token {}'.format(token)}
 retries = Retry(
-    total=5,
+    total=3,
     backoff_factor=2,
     status_forcelist=[405, 429, 500, 502, 503, 504],
     method_whitelist=["HEAD", "GET", "PUT", "POST", "PATCH"]
 )
-adapter = TimeoutHTTPAdapter(timeout=5, max_retries=retries)
+adapter = TimeoutHTTPAdapter(timeout=30, max_retries=retries)
 session.mount("https://", adapter)
 session.mount("http://", adapter)
 
