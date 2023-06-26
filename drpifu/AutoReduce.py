@@ -2125,7 +2125,7 @@ def clean_post_redux(outdir, utdstr):
     ndel = 0
     # Remove raw file links
     flist = glob.glob(os.path.join(outdir, "*sedm2%s_*.fits" % utdstr))
-    flist.extend(glob.glob(os.path.join(outdir, '*kped%s_*.fits' % utdstr)))
+    # flist.extend(glob.glob(os.path.join(outdir, '*kped%s_*.fits' % utdstr)))
     for fl in flist:
         if os.path.islink(fl):
             os.remove(fl)
@@ -2163,8 +2163,8 @@ def clean_post_redux(outdir, utdstr):
     flist = glob.glob(os.path.join(outdir, "*dome.fits"))
     flist.extend(glob.glob(os.path.join(outdir, '??.fits')))
     flist.extend(glob.glob(os.path.join(outdir, 'bias*.fits')))
-    # Compress rainbow cam images
-    flist.extend(glob.glob(os.path.join(outdir, 'kped*.fits')))
+    Compress rainbow cam images
+    # flist.extend(glob.glob(os.path.join(outdir, 'kped*.fits')))
     for fl in flist:
         if os.path.islink(fl):
             continue
