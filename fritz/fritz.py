@@ -204,7 +204,7 @@ def upload_spectra(spec_file, request_id=None, sourceid=None, inst_id=1078,
         submission_dict.update({'group_ids': [group_id]})
     # Are we just testing?
     if testing:
-        print(submission_dict)
+        # print(submission_dict)
         ret = {"message": "string", "status": "success", "data": {"id": -1}}
         return ret
     else:

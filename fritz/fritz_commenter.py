@@ -320,6 +320,19 @@ def add_SNID_pysedm_autoannot(fname, object_id=None, spec_id=None,
         print('no pysedm_report for {}?'.format(header['name']))
         pr_posted = False
 
+    # Upload e3d cube
+    try:
+        e3d_cube = glob('e3d_' + fname.split('__')[-1].replace('.txt', '.fits'))[0]
+        e3d_posted = add_spec_attachment(object_id,
+                                            'e3d_cube:spc%d' % spec_id,
+                                            e3d_cube, spec_id=spec_id,
+                                          testing=testing)
+    except IndexError:
+        print('no e3d_cube for {}?'.format(header['name']))
+        e3d_posted = False
+    if e3d_posted:
+        print('e3d_cube for {} posted'.format(header['name']))
+
     # SNID RESULTS
     if 'snidmatchtype' not in header:
         print(fname, "never run through snid?")
