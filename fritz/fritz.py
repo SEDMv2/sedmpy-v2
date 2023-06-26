@@ -347,29 +347,29 @@ def update_target_by_request_id(request_id, objname, add_spectra=False, spectra_
                     print("SNID annotations successfully posted")
                 else:
                     print("Warning: SNID annotations encountered a problem")
-                # now upload SNIascore info
-                try:
-                    ret_data = spec_ret['data']
-                    spec_id = ret_data['id']
-                    ia_annots_posted, status_tns = add_ia_annots(
-                        spectra_file, object_id=object_name, spec_id=spec_id,
-                        testing=testing)
-                except KeyError:
-                    ia_annots_posted = False
-                    print("ERROR - unable to upload SNIascore annotations")
-                if ia_annots_posted:
-                    print("SNIascore annotations successfully posted")
-                else:
-                    print("Warning: SNIascore annotations encountered a "
-                          "problem")
+                # # now upload SNIascore info
+                # try:
+                #     ret_data = spec_ret['data']
+                #     spec_id = ret_data['id']
+                #     ia_annots_posted, status_tns = add_ia_annots(
+                #         spectra_file, object_id=object_name, spec_id=spec_id,
+                #         testing=testing)
+                # except KeyError:
+                #     ia_annots_posted = False
+                #     print("ERROR - unable to upload SNIascore annotations")
+                # if ia_annots_posted:
+                #     print("SNIascore annotations successfully posted")
+                # else:
+                #     print("Warning: SNIascore annotations encountered a "
+                #           "problem")
 
-        if add_status:
-            try:
-                status_ret = update_status_request(spec_stat, marshal_id,
-                                                   'fritz',
-                                                   testing=testing)
-            except requests.exceptions.ConnectionError:
-                status_ret = None
+        # if add_status:
+        #     try:
+        #         status_ret = update_status_request(spec_stat, marshal_id,
+        #                                            'fritz',
+        #                                            testing=testing)
+        #     except requests.exceptions.ConnectionError:
+        #         status_ret = None
 
         return_link = fritz_view_source_url + "/%s" % object_name
 
