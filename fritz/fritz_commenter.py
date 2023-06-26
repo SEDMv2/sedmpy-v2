@@ -167,7 +167,7 @@ def add_SNIascore_pysedm_autoannot(fname, object_id=None, spec_id=None,
             'SNIascore_err': header['SNIASCORE_ERR']}
     # construct origin
     # origin = 'SNIascore:spc%d' % spec_id
-    origin = 'sedm:SNIascore'
+    origin = 'sedmv2:SNIascore'
 
     print(andic)
 
@@ -364,7 +364,7 @@ def add_SNID_pysedm_autoannot(fname, object_id=None, spec_id=None,
         andic[key] = header['snidmatch' + key]
     # construct origin
     # origin = 'sedm:spc%d' % spec_id
-    origin = 'sedm:SNID'
+    origin = 'sedmv2:SNID'
 
     if not add_spec_autoannot(object_id, andic, spec_id=spec_id,
                               origin=origin, testing=testing):
