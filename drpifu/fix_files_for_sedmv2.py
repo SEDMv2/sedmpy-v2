@@ -1,13 +1,21 @@
 import numpy as np
 from astropy.io import fits
-import glob2, os, subprocess, argparse
+import glob2, os, subprocess, argparse, json
 from astropy.time import Time
 from astroplan import Observer
 from astropy.coordinates import SkyCoord
 import astropy.units as u
+import sedmpy_version
 
-SEDMRAWPATH = os.getenv('SEDMRAWPATH')
 
+try:
+    configfile = os.environ["SEDMCONFIG"]
+except KeyError:
+    configfile = os.path.join(sedmpy_version.CONFIG_DIR, "sedmconfig.json")
+with open(configfile) as config_file:
+    sedm_cfg = json.load(config_file)
+
+SEDMRAWPATH = sedm_cfg['paths']['rawpath']
 
 def change_filenames(date):
     files = glob2.glob(f'{SEDMRAWPATH}/{date}/*.fits')
