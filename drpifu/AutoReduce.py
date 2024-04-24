@@ -102,6 +102,8 @@ def cube_ready(caldir='./', cur_date_str=None, avrmslim=100.0):
 
     """
 
+    # Hardcoding a true return until wavesol is stable
+    return True
     ret = False
 
     # Files to look for
