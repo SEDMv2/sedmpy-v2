@@ -103,7 +103,6 @@ def cube_ready(caldir='./', cur_date_str=None, avrmslim=100.0):
     """
 
     # Hardcoding a true return until wavesol is stable
-    return True
     ret = False
 
     # Files to look for
@@ -133,6 +132,7 @@ def cube_ready(caldir='./', cur_date_str=None, avrmslim=100.0):
                     avrms = float(line.split()[-1])
                     wave_stats_ok = (avrms < avrmslim)
         # Does wavelength solution pass?
+        wave_stats_ok = True
         if wave_stats_ok:
             logging.info("Wavelength stats passed")
         else:
