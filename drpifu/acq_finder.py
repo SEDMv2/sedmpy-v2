@@ -273,6 +273,7 @@ if __name__ == "__main__":
     imhdr = fits.open(imfile)[0].header
     objnam = imhdr['OBJECT']
     imtime = Time(imhdr['JD'],format='jd')
+    imreadtime = Time(imhdr['DATE'],format='isot')
         # objnam = fitsutils.get_par(imfile, "OBJECT").split()[0]
         # if 'STD' in objnam:
         #     objnam = objnam.split('STD-')[-1].split()[0]
@@ -320,7 +321,7 @@ if __name__ == "__main__":
     for fl in files:
         dt,tm = os.path.basename(fl).split('_')[1:3]
         filetime = Time(f'{dt[0:4]}-{dt[4:6]}-{dt[6:8]}T{tm[0:2]}:{tm[2:4]}:{tm[4:]}',format='isot')
-        if filetime - imtime < TimeDelta(180,format='sec'):
+        if (filetime > imtime) & (filetime < imreadtime):
             filesacq.append(fl)
 
     # for f in files:
