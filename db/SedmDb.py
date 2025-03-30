@@ -8,7 +8,10 @@ from datetime import timedelta
 from werkzeug.security import generate_password_hash
 import os
 import sys
+import json
 import psycopg2.extras
+import sedmpy_version
+
 
 import smtplib
 
@@ -28,6 +31,13 @@ fritz_view_source_url = fritz_base_url + 'source/'
 growth_base_url = 'http://skipper.caltech.edu:8080/cgi-bin/growth/'
 growth_view_source_url = growth_base_url + 'view_source.cgi?name='
 
+try:
+    configfile = os.environ["SEDMCONFIG"]
+except KeyError:
+    configfile = os.path.join(sedmpy_version.CONFIG_DIR, 'sedmconfig.json')
+with open(configfile) as config_file:
+    sedm_cfg = json.load(config_file)
+dbpath = sedm_cfg['paths']['dbpath']
 
 # Singleton/SingletonPattern.py
 
@@ -40,11 +50,12 @@ class SedmDB:
             Needs the username as a parameter.
             The password for SedmDB must be stored in ~/.pgpass
             """
-            cmd = "cat ~/.pgpass | grep sedmdbtest | grep -v '#' | " \
-                  "awk -F ':' '{print $4}' | head -n 1"
+            # cmd = "cat ~/.pgpass | grep sedmdbtest | grep -v '#' | " \
+            #       "awk -F ':' '{print $4}' | head -n 1"
+            user, passwd = open(f'{dbpath}pgpass', 'r').readlines()[0].split(':')
 
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-            self.user_sedmdb = p.stdout.read().decode("utf-8").replace('\n', '')
+            # p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+            self.user_sedmdb = user #p.stdout.read().decode("utf-8").replace('\n', '')
             self.dbname = dbname
             self.host = host
             self.port = port
@@ -75,8 +86,8 @@ class SedmDB:
 
     instance = None
 
-    def __init__(self, dbname='sedmdb', host='localhost', port=5432,
-                 supply_pass=False, passwd=None):
+    def __init__(self, dbname='sedmdbtest', host='localhost', port=5432,
+                 supply_pass=True, passwd=None):
         """
         Makes sure only one instance is created.
         """

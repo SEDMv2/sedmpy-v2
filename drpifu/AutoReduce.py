@@ -441,9 +441,10 @@ def update_observation(input_fitsfile):
 
     sedmdb = db.SedmDb.SedmDB()
     observation_id, status = sedmdb.add_observation(obs_dict)
-    req_id, req_update_status = sedmdb.update_request(
-        {'id': obs_dict['request_id'], 'status': 'COMPLETED'})
-    logging.info("REQ_ID %d: %s" % (req_id, req_update_status))
+    # Update request is irrelevant for us
+    # req_id, req_update_status = sedmdb.update_request(
+    #     {'id': obs_dict['request_id'], 'status': 'COMPLETED'})
+    # logging.info("REQ_ID %d: %s" % (req_id, req_update_status))
     logging.info(status)
     return observation_id
     # END: update_observation
@@ -862,7 +863,7 @@ def dosci(destdir='./', datestr=None, local=False, nodb=False,
                                          % fn.split('.')[0]))
                         if flxcal:
                             # Generate effective area and efficiency plots
-                            cmd = f"{SEDMPYPATH}/drpifu/Eff.py %s --contains %s" % \
+                            cmd = f"{SEDMPYPATH}/drpifu/Eff.py %s --contains %s --refl 1.0" % \
                                   (datestr, fn.split('.')[0])
                             logging.info(cmd)
                             subprocess.call(cmd, shell=True)
@@ -1138,17 +1139,18 @@ def update_spec(input_specfile, update_db=False, nopush_marshal=False):
 
     # Get marshal number
     marsh = None
-    if 'REQ_ID' in ff[0].header:
-        request_id = ff[0].header['REQ_ID']
-        # Search for target in the database
-        try:
-            res = sedmdb.get_from_request(["external_id"],
-                                          {"id": request_id})[0]
-            marsh = res[0]
-        except IndexError:
-            print("Unable to retrieve marshal number from database")
-        except TypeError:
-            print("Not a valid REQ_ID")
+    request_id = None
+    if 'REQUSTID' in ff[0].header:
+        request_id = ff[0].header['REQUSTID']
+        # # Search for target in the database
+        # try:
+        #     res = sedmdb.get_from_request(["external_id"],
+        #                                   {"id": request_id})[0]
+        #     marsh = res[0]
+        # except IndexError:
+        #     print("Unable to retrieve fritz number from database")
+        # except TypeError:
+        #     print("Not a valid REQUSTID")
 
     # Get header keyword values
     for key in header_dict.keys():
@@ -1211,22 +1213,22 @@ def update_spec(input_specfile, update_db=False, nopush_marshal=False):
     # Add asciifile
     spec_dict['asciifile'] = input_specfile.split('.fit')[0] + '.txt'
 
-    # Get marshal spec id
-    if 'STD' not in objnam and spec_dict['quality'] <= 2 and marsh != 2:
-        srcid = None
-        specid = None
-        if nopush_marshal:
-            logging.warning("nopush_marshal: skipping marshal retrieval")
-        else:
-            srcid, specid = mc.get_missing_info(objnam, utdate, srcid, specid)
-        if srcid is None:
-            logging.info("Not an object on the growth marshal: %s" % objnam)
-        else:
-            if specid is None:
-                logging.info("No spectrum found on the growth marshal: %s, %s"
-                             % (utdate, objnam))
-            else:
-                spec_dict['marshal_spec_id'] = specid
+    # # Get marshal spec id (DON"T NEED THIS)
+    # if 'STD' not in objnam and spec_dict['quality'] <= 2: # and marsh != 2:
+    #     srcid = None
+    #     specid = None
+    #     if nopush_marshal:
+    #         logging.warning("nopush_marshal: skipping marshal retrieval")
+    #     else:
+    #         srcid, specid = mc.get_missing_info(objnam, utdate, srcid, specid)
+    #     if srcid is None:
+    #         logging.info("Not an object on the growth marshal: %s" % objnam)
+    #     else:
+    #         if specid is None:
+    #             logging.info("No spectrum found on the growth marshal: %s, %s"
+    #                          % (utdate, objnam))
+    #         else:
+    #             spec_dict['marshal_spec_id'] = specid
 
     # Check if we've already added this spectrum
     search_fits = input_specfile.replace('+', '\+')
@@ -1241,8 +1243,8 @@ def update_spec(input_specfile, update_db=False, nopush_marshal=False):
             return spec_id[0][0]
 
     # Get observation and object ids
-    ifufile = 'ifu' + '_'.join(
-        input_specfile.split('_ifu')[-1].split('_')[:4]) + '.fits'
+    ifufile = 'sedm2' + '_'.join(
+        input_specfile.split('_sedm2')[-1].split('_')[:4]) + '.fits'
     observation_id = sedmdb.get_from_observation(['id', 'object_id'],
                                                  {'fitsfile': ifufile},
                                                  {'fitsfile': '~'})
@@ -1343,7 +1345,7 @@ def update_cube(input_fitsfile):
     sedmdb = db.SedmDb.SedmDB()
 
     # Get observation id
-    fitsfile = 'ifu' + input_fitsfile.split('_ifu')[-1]
+    fitsfile = 'sedm2' + input_fitsfile.split('_sedm2')[-1]
     observation_id = sedmdb.get_from_observation(['id'],
                                                  {'fitsfile': fitsfile},
                                                  {'fitsfile': '~'})
@@ -1369,10 +1371,10 @@ def email_user(spec_file, utdate, object_name):
     """ Send e-mail to requestor indicating followup completed"""
     # get request id
     ff = pf.open(spec_file)
-    if 'REQ_ID' in ff[0].header:
-        request = int(ff[0].header['REQ_ID'])
+    if 'REQUSTID' in ff[0].header:
+        request = int(ff[0].header['REQUSTID'])
     else:
-        logging.error("No keyword REQ_ID found in %s\nNo email sent"
+        logging.error("No keyword REQUSTID found in %s\nNo email sent"
                       % spec_file)
         return
     if 'redo' in spec_file:
